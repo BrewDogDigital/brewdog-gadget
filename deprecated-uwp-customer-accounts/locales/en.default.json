@@ -1,0 +1,12 @@
+{
+  "fullPageTitle": "Equity For Punks!",
+  "infoText1": "Equity for Punks was a ground-breaking initiative that flipped the script on traditional crowd funding. Breaking records worldwide, Equity for Punks was a unique way for beer enthusiasts to become stakeholders in the Good Ship BrewDog.",
+  "infoText2": "Through Equity for Punks, we invited beer lovers to invest in the business, allowing them to own a slice of the brewery and share in its success and growth. They also got some pretty awesome perks along the way too, including discounts, beers, a world-famous Annual General Mayhem and more.",
+  "infoText3": "Our last Equity for Punk investment round closed in 2021, so we are no longer accepting more investors.",
+  "welcomeMessage": "Hello {{name}}! ",
+  "memberStatus": "Congrats! You're a BrewDog Equity Punk! 🎉 ",
+  "memberDiscount": "You get a {{discount}}% discount on all BrewDog bars and online shop purchases. 🍻",
+  "nonMemberStatus": "You're not a BrewDog Equity Punk yet. 😢",
+  "loading": "Loading...",
+  "error": "Something went wrong! Please try again later."
+}

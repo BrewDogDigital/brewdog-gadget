@@ -1,0 +1,22 @@
+query RunInput {
+  cart {
+    lines {
+      id
+      quantity
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          product {
+            id
+            title
+          }
+          # Fetch the 'pfand_per_item' metafield
+          metafield(namespace: "brewdog", key: "pfand") {
+            value
+          }
+        }
+      }
+    }
+  }
+}

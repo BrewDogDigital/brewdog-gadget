@@ -1,0 +1,10 @@
+{
+  "welcome": "Bienvenue dans l'extension {{target}}!",
+  "iWouldLikeAFreeGiftWithMyOrder": "Je souhaite recevoir un cadeau gratuit avec ma commande",
+  "attributeChangesAreNotSupported": "Les modifications d'attribut ne sont pas prises en charge dans cette commande",
+  "consentToMarketing": "Rejoignez notre communauté et soyez le premier à être informé des offres exclusives, des nouvelles bières et des mises à jour du bar.",
+  "consentToMarketing2": "Vous pouvez vous désabonner à tout moment. Pour plus de détails, consultez notre ",
+  "privacyPolicyText": "Politique de confidentialité.",
+  "privacyPolicyURL": "https://www.example.com/privacy-policy",
+  "subscribedToMarketing": "Merci de vous être inscrit!"
+}

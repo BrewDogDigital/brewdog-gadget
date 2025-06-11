@@ -1,0 +1,40 @@
+{
+  "name": "brewdog",
+  "version": "0.1.0",
+  "description": "Internal package for Gadget app brewdog (Development environment)",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "vite:build": "NODE_ENV=production vite build"
+  },
+  "workspaces": [
+    "extensions/*"
+  ],
+  "trustedDependencies": [
+    "@shopify/plugin-cloudflare"
+  ],
+  "dependencies": {
+    "@gadget-client/brewdog": "link:.gadget/client",
+    "@gadgetinc/react": "^0.15.11",
+    "@gadgetinc/react-shopify-app-bridge": "^0.15.2",
+    "@shopify/app-bridge-react": "4.0.0",
+    "@shopify/polaris": "^12.0.0",
+    "@shopify/polaris-icons": "^8.1.0",
+    "gadget-server": "link:.gadget/server",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "6.15.0",
+    "shopify-api-node": "^3.12.6",
+    "@fastify/cors": "^9.0.1"
+  },
+  "devDependencies": {
+    "@shopify/cli": "^3.63.2",
+    "@types/node": "^20.12.8",
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@vitejs/plugin-react-swc": "3.2.0",
+    "typescript": "^5.4.5",
+    "vite": "^4.4.9"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

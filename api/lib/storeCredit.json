@@ -1,0 +1,597 @@
+[
+  {
+    "customer_id": "000000",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "22064",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "80318",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "47.4725"
+  },
+  {
+    "customer_id": "86321",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "55.02"
+  },
+  {
+    "customer_id": "87092",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "100"
+  },
+  {
+    "customer_id": "91754",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "102074",
+    "for_website": "BrewDog NL",
+    "L6m Valid": "3"
+  },
+  {
+    "customer_id": "133277",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "60"
+  },
+  {
+    "customer_id": "144332",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "176552",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "50"
+  },
+  {
+    "customer_id": "198134",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "0.2"
+  },
+  {
+    "customer_id": "278981",
+    "for_website": "BrewDog ES",
+    "L6m Valid": "25.29"
+  },
+  {
+    "customer_id": "299510",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "17.06"
+  },
+  {
+    "customer_id": "308984",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "17"
+  },
+  {
+    "customer_id": "308984",
+    "for_website": "BrewDog IE",
+    "L6m Valid": "90"
+  },
+  {
+    "customer_id": "343958",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "441263",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "290"
+  },
+  {
+    "customer_id": "450326",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "30"
+  },
+  {
+    "customer_id": "459701",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "288"
+  },
+  {
+    "customer_id": "470744",
+    "for_website": "BrewDog FR",
+    "L6m Valid": "6.8"
+  },
+  {
+    "customer_id": "495611",
+    "for_website": "BrewDog ES",
+    "L6m Valid": "198.9"
+  },
+  {
+    "customer_id": "497891",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "20"
+  },
+  {
+    "customer_id": "543313",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "568123",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "15"
+  },
+  {
+    "customer_id": "579169",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "19.63"
+  },
+  {
+    "customer_id": "579169",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "664402",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "20"
+  },
+  {
+    "customer_id": "806605",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "862171",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "60"
+  },
+  {
+    "customer_id": "879750",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5.97"
+  },
+  {
+    "customer_id": "893398",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "907321",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "7"
+  },
+  {
+    "customer_id": "948337",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "7"
+  },
+  {
+    "customer_id": "1232190",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "1298913",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "1306837",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "1321605",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1346944",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1349844",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "25"
+  },
+  {
+    "customer_id": "1398397",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1409044",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "1410456",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1412018",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1424805",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "26.18"
+  },
+  {
+    "customer_id": "1472568",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "8"
+  },
+  {
+    "customer_id": "1484970",
+    "for_website": "BrewDog FR",
+    "L6m Valid": "113.51"
+  },
+  {
+    "customer_id": "1487111",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "3.08"
+  },
+  {
+    "customer_id": "1503415",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "40"
+  },
+  {
+    "customer_id": "1520009",
+    "for_website": "BrewDog NL",
+    "L6m Valid": "40"
+  },
+  {
+    "customer_id": "1520596",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "9.29"
+  },
+  {
+    "customer_id": "1524202",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "15"
+  },
+  {
+    "customer_id": "1560608",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1565448",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1671655",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1703656",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1768350",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1797341",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "3.59"
+  },
+  {
+    "customer_id": "1806012",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "1830285",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "15"
+  },
+  {
+    "customer_id": "1853296",
+    "for_website": "BrewDog FR",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "1875989",
+    "for_website": "BrewDog FR",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1877944",
+    "for_website": "BrewDog FR",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "1901318",
+    "for_website": "BrewDog FR",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "1930206",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1951060",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "1969796",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "15"
+  },
+  {
+    "customer_id": "2156138",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2170714",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2200600",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2247902",
+    "for_website": "BrewDog FR",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2250814",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "7.95"
+  },
+  {
+    "customer_id": "2259510",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2261467",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "6"
+  },
+  {
+    "customer_id": "2293973",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2307293",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2348108",
+    "for_website": "BrewDog US (New)",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2372943",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2481897",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5.95"
+  },
+  {
+    "customer_id": "2485897",
+    "for_website": "BrewDog FR",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2489667",
+    "for_website": "BrewDog FR",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2501005",
+    "for_website": "BrewDog US (New)",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2518010",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2523618",
+    "for_website": "BrewDog FR",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2554395",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2559888",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2569863",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "15"
+  },
+  {
+    "customer_id": "2577020",
+    "for_website": "BrewDog US (New)",
+    "L6m Valid": "200"
+  },
+  {
+    "customer_id": "2582709",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2582710",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2586802",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2588383",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2588541",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "6"
+  },
+  {
+    "customer_id": "2589720",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2590036",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "15"
+  },
+  {
+    "customer_id": "2590179",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "7"
+  },
+  {
+    "customer_id": "2590330",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "15"
+  },
+  {
+    "customer_id": "2592750",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2593258",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2593561",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2593811",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "53.1"
+  },
+  {
+    "customer_id": "2594081",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2594262",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2594852",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "15"
+  },
+  {
+    "customer_id": "2594872",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2594935",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2594947",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2595261",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "15"
+  },
+  {
+    "customer_id": "2595514",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2596767",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2596826",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2596893",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2597183",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2598619",
+    "for_website": "BrewDog AU",
+    "L6m Valid": "81.15"
+  },
+  {
+    "customer_id": "2599568",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2600659",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "10"
+  },
+  {
+    "customer_id": "2601380",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "6"
+  },
+  {
+    "customer_id": "2601540",
+    "for_website": "BrewDog UK / Int",
+    "L6m Valid": "15"
+  },
+  {
+    "customer_id": "2613093",
+    "for_website": "BrewDog EU",
+    "L6m Valid": "5"
+  },
+  {
+    "customer_id": "2615598",
+    "for_website": "BrewDog NL",
+    "L6m Valid": "5"
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "name": "uwp-customer-accounts",
+  "private": true,
+  "version": "1.0.0",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@gadget-client/brewdog": "^1.2.0-development.27",
+    "@gadgetinc/shopify-extensions": "^0.2.1",
+    "@shopify/ui-extensions": "unstable",
+    "@shopify/ui-extensions-react": "unstable",
+    "react": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "react-reconciler": "0.29.0"
+  }
+}

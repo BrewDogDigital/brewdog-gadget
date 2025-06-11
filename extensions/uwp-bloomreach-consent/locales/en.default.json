@@ -1,0 +1,10 @@
+{
+  "welcome": "Welcome to the {{target}} extension!",
+  "iWouldLikeAFreeGiftWithMyOrder": "I would like to receive a free gift with my order",
+  "attributeChangesAreNotSupported": "Attribute changes are not supported in this checkout",
+  "consentToMarketing": "Join our community and be the first to hear about exclusive offers, new beer drops and bar updates.",
+  "consentToMarketing2": "You can unsubscribe at any time. For more details, see our ",
+  "privacyPolicyText": "Privacy Policy",
+  "privacyPolicyURL": "https://www.example.com/privacy-policy",
+  "subscribedToMarketing": "Thanks for joining!"
+}

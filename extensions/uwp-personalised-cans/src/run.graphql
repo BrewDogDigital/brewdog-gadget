@@ -1,0 +1,44 @@
+query RunInput {
+  cart {
+    lines {
+
+      id
+      quantity
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          sku
+          pc_bundle_components: metafield(
+            namespace: "custom"
+            key: "pc_bundle_components"
+          ) {
+            value
+          }
+          pc_bundle_quantities: metafield(
+            namespace: "custom"
+            key: "pc_bundle_quantities"
+          ) {
+            value
+          }
+          product {
+            id
+            title
+          }
+        }
+      }
+      document_id: attribute(key: "_document_id") {
+        value
+      }
+      uuid: attribute(key: "_uuid") {
+        value
+      }
+      name: attribute(key: "name") {
+        value
+      }
+      message: attribute(key: "message") {
+        value
+      }
+    }
+  }
+}

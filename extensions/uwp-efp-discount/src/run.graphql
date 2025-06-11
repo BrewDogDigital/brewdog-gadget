@@ -1,0 +1,37 @@
+query RunInput {
+  cart {
+    lines {
+      id
+      quantity
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          product {
+            title
+          }
+        }
+      }
+      cost {
+        compareAtAmountPerQuantity {
+          amount
+        }
+      }
+    }
+    buyerIdentity {
+      customer {
+        email
+        hasTags(tags: ["efp-member", "efp-discount-5", "efp-discount-10", "staff"]) {
+            tag
+            hasTag
+        }
+      }
+      isAuthenticated
+    }
+  }
+  shop {
+    metafield(namespace: "brewdog", key: "efp_double_discount") {
+      value
+    }
+  }
+}
