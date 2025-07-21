@@ -74,9 +74,10 @@ export function run(input: RunInput): FunctionRunResult {
     .filter((line) => line.merchandise.__typename === "ProductVariant" && !line.merchandise.product.title.toLowerCase().includes("gift card"))
     .map((line) => {
       console.log('line without compareAtAmountPerQuantity -- adding to targets', line);
+      const merchandise = line.merchandise as { __typename: "ProductVariant"; id: string; product: { title: string; } };
       return {
-        cartLine: {
-          id: line.id,
+        productVariant: {
+          id: merchandise.id,
           quantity: line.quantity,
         },
       } as Target;

@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   reactExtension,
   Text,
   BlockLayout,
   View,
-  useNote,
+  useAttributeValues,
   useSettings,
-  Icon,
+  useApplyMetafieldsChange,
 } from '@shopify/ui-extensions-react/checkout';
 
 export default reactExtension(
@@ -15,14 +15,28 @@ export default reactExtension(
 );
 
 function CheckoutNote() {
-  const note = useNote();
+  const [message] = useAttributeValues(['message']);
   const settings = useSettings();
+  const applyMetafieldsChange = useApplyMetafieldsChange();
 
   // Get settings with fallback values
   const noteTitle = settings?.note_title || 'Gift Message';
 
-  // Only render if note exists
-  if (!note) {
+  // Set metafield when message exists
+  useEffect(() => {
+    if (message) {
+      applyMetafieldsChange({
+        type: 'updateMetafield',
+        namespace: 'move_fresh',
+        key: 'gift_message',
+        valueType: 'string',
+        value: message,
+      });
+    }
+  }, [message, applyMetafieldsChange]);
+
+  // Only render if message exists
+  if (!message) {
     return null;
   }
 
@@ -42,9 +56,9 @@ function CheckoutNote() {
             </Text>
           </View>
           
-          {/* Note content */}
+          {/* Message content */}
           <Text size="base" appearance="subdued">
-            {note}
+            {message}
           </Text>
         </BlockLayout>
       </View>
