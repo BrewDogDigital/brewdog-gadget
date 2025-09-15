@@ -1,0 +1,6 @@
+{
+  "name": "Advent Shipping",
+  "description": "Sets shipping to £0 when a product with 'advent-shipping' tag is in cart along with another product"
+}
+
+
