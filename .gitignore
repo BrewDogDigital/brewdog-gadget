@@ -1,3 +1,6 @@
 .gadget/
 node_modules/
 **/.DS_Store
+.shopify/
+**/dist/
+**/generated/
