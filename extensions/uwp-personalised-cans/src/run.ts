@@ -58,26 +58,34 @@ function optionallyBuildExpandOperation(line) {
 
     const expandedCartItems = componentReferences.map(
       (merchandiseId, index) => ({
-        attributes: merchandiseId == `gid://shopify/ProductVariant/${PUNK_CAN_VARIANT_ID}` || 
-                   merchandiseId == `gid://shopify/ProductVariant/${HAZY_CAN_VARIANT_ID}` || 
-                   merchandiseId == `gid://shopify/ProductVariant/${LOST_CAN_VARIANT_ID}` ? [
-          {
-            key: "_document_id",
-            value: line.document_id.value,
-          },
-          {
-            key: "_uuid",
-            value: line.uuid.value,
-          },
-          {
-            key: "name",
-            value: line.name.value,
-          },
-          {
-            key: "message",
-            value: line.message.value,
-          }
-        ] : [],
+        attributes: [
+          ...(merchandiseId == `gid://shopify/ProductVariant/${PUNK_CAN_VARIANT_ID}` || 
+             merchandiseId == `gid://shopify/ProductVariant/${HAZY_CAN_VARIANT_ID}` || 
+             merchandiseId == `gid://shopify/ProductVariant/${LOST_CAN_VARIANT_ID}` ? [
+            {
+              key: "_document_id",
+              value: line.document_id.value,
+            },
+            {
+              key: "_uuid",
+              value: line.uuid.value,
+            },
+            {
+              key: "name",
+              value: line.name.value,
+            },
+            {
+              key: "message",
+              value: line.message.value,
+            }
+          ] : []),
+          ...(merchandise.sku ? [
+            {
+              key: "parent_sku",
+              value: merchandise.sku,
+            }
+          ] : [])
+        ],
         merchandiseId: merchandiseId,
         quantity: componentQuantities[index],
       })

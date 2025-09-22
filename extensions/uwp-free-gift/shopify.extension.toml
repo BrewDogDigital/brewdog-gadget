@@ -3,6 +3,7 @@ api_version = "2024-07"
 [[extensions]]
 name = "t:name"
 handle = "uwp-free-gift"
+uid = "c5429c6c-0f7c-d933-9d61-8b38e78ffc0057509cb7"
 type = "function"
 
 description = "t:description"

@@ -7,7 +7,6 @@ name = "UWP BrewDog V2"
 handle = "uwp-brewdog-v2"
 
 [build]
-include_config_on_deploy = true
 dev_store_url = "testing-store-danny.myshopify.com"
 
 [webhooks]

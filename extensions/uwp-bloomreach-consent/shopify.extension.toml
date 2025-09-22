@@ -8,6 +8,7 @@ api_version = "2024-10"
 [[extensions]]
 name = "uwp-bloomreach-consent"
 handle = "uwp-bloomreach-consent"
+uid = "24a34d65-ba5b-6de1-45d5-f0a321417b73f0d54496"
 type = "ui_extension"
 
 
