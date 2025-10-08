@@ -507,6 +507,8 @@ export const permissions: GadgetPermissions = {
         },
       },
       actions: {
+        manualActivateCartTransform: true,
+        saveMupSettings: true,
         scheduledShopifySync: true,
       },
     },

@@ -17,6 +17,7 @@ import {
   Link
 } from "react-router-dom";
 import Index from "../routes/index";
+import MupSettingsPage from "../routes/mup-settings";
 import EFPDoubleDiscountPage from "../routes/efp-double-discount"
 import { api } from "../api";
 
@@ -41,6 +42,7 @@ function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<Index />} />
         <Route path="/efp-double-discount" element={<EFPDoubleDiscountPage />} />
+        <Route path="/mup-settings" element={<MupSettingsPage />} />
         <Route path="*" element={<Error404 />} />
       </Route>
     )
@@ -93,6 +95,7 @@ function EmbeddedApp() {
       <NavMenu>
         <Link to="/" rel="home">Shop Information.</Link>
         <Link to="/efp-double-discount">EFP Double Discount!</Link>
+        <Link to="/mup-settings">MUP Settings</Link>
       </NavMenu>
     </>
   );

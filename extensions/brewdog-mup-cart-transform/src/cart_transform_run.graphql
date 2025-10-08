@@ -1,0 +1,42 @@
+query CartTransformRunInput {
+  cart {
+    lines {
+      id
+      quantity
+      attribute(key: "mup") {
+        value
+      }
+      originalPriceAttribute: attribute(key: "original_price") {
+        value
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          product {
+            id
+          }
+          metafield(namespace: "custom", key: "units_per_item") {
+            value
+            type
+          }
+        }
+      }
+      cost { amountPerQuantity { amount currencyCode } }
+    }
+  }
+  shop {
+    levyProduct: metafield(namespace: "custom", key: "mup_levy_product") {
+      value
+      type
+    }
+    minimumUnitPrice: metafield(namespace: "custom", key: "minimum_unit_price") {
+      value
+      type
+    }
+    debugFlag: metafield(namespace: "custom", key: "mup_debug") {
+      value
+      type
+    }
+  }
+}
