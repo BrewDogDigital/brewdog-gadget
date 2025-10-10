@@ -91,6 +91,21 @@ export const getLabelSku = (docId: string): string | null => {
     //198: "10101-C6330-PUNK-V2",
     198: "PUNK-PERSONALISED-6",
     201: "10111-C6330-WHAM",
+    202: "10111-C6330-XMSM",
+    203: "10118-C6330-XMSM",
+    204: "10101-C6330-XMSM",
+    205: "10111-C6330-XMGB",
+    206: "10118-C6330-XMGB",
+    207: "10101-C6330-XMGB",
+    208: "10111-C6330-XMTR",
+    209: "10118-C6330-XMTR",
+    210: "10101-C6330-XMTR",
+    211: "10111-C6330-XMNL",
+    212: "10118-C6330-XMNL",
+    213: "10101-C6330-XMNL",
+    214: "10111-C6330-XMNTL",
+    215: "10118-C6330-XMNTL",
+    216: "10101-C6330-XMNTL",
   };
 
   const docIdNumber = parseInt(docId, 10);
