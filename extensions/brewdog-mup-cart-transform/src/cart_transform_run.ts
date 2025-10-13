@@ -217,6 +217,21 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
     shopId: input.shop?.id ?? null,
   });
 
+  // Check if customer is in Scotland via cart attribute
+  const ukRegionAttribute = (input.cart as any).attribute;
+  const ukRegion = ukRegionAttribute?.value;
+  
+  console.log("🌍 UK Region from cart attribute:", ukRegion);
+
+  // Only apply MUP if customer is in Scotland
+  if (ukRegion !== "scotland") {
+    console.log("⏭️ Customer not in Scotland (uk_region: " + (ukRegion || "not set") + "), skipping MUP");
+    console.log("🏁 Cart Transform Function completed - NO CHANGES (not Scotland)");
+    return NO_CHANGES;
+  }
+
+  console.log("🏴󠁧󠁢󠁳󠁣󠁴󠁿 Customer is in Scotland - applying MUP logic");
+
   const operations: any[] = [];
 
   // Assemble MUP configuration from shop metafields (aliased in query)

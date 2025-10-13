@@ -1,5 +1,8 @@
 query CartTransformRunInput {
   cart {
+    attribute(key: "uk_region") {
+      value
+    }
     lines {
       id
       quantity
