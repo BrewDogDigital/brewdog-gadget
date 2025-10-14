@@ -1,0 +1,16 @@
+api_version = "2025-01"
+
+[[extensions]]
+name = "MUP Checkout Guidance"
+handle = "brewdog-mup-checkout"
+uid = "6e1afb81-2157-1270-dff9-9c20c16b38645f9c101a"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/Checkout.tsx"
+target = "purchase.checkout.block.render"
+
+[extensions.capabilities]
+api_access = true
+network_access = false
+
