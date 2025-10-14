@@ -1,0 +1,50 @@
+query CartValidationsGenerateRunInput {
+  cart {
+    attribute(key: "uk_region") {
+      value
+    }
+    lines {
+      id
+      quantity
+      attribute(key: "mup") {
+        value
+      }
+      parentLineAttribute: attribute(key: "parent_line_id") {
+        value
+      }
+      unitsAttribute: attribute(key: "mup_units_per_item") {
+        value
+      }
+      minPriceAttribute: attribute(key: "mup_minimum_unit_price") {
+        value
+      }
+      levyAmountAttribute: attribute(key: "mup_levy_per_item") {
+        value
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          metafield(namespace: "custom", key: "units_per_item") {
+            value
+          }
+        }
+      }
+      cost {
+        amountPerQuantity {
+          amount
+        }
+        totalAmount {
+          amount
+        }
+      }
+    }
+  }
+  shop {
+    minimumUnitPrice: metafield(namespace: "custom", key: "minimum_unit_price") {
+      value
+    }
+  }
+}
+
+

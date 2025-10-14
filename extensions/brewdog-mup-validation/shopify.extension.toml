@@ -1,0 +1,17 @@
+api_version = "2025-07"
+
+[[extensions]]
+name = "t:name"
+handle = "brewdog-mup-validation"
+type = "function"
+uid = "dc160125-b170-0f86-a205-c36e198d4658fe9595f2"
+description = "t:description"
+
+  [[extensions.targeting]]
+  target = "cart.validations.generate.run"
+  input_query = "src/cart_validations_generate_run.graphql"
+  export = "cart-validations-generate-run"
+
+  [extensions.build]
+  command = ""
+  path = "dist/function.wasm"

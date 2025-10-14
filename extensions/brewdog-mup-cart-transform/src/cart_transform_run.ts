@@ -399,10 +399,11 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
                   key: "parent_line_id",
                   value: line.id,
                 },
+                // These attributes are required for validation function to recalculate levy
+                { key: "mup_units_per_item", value: unitsPerItem.toString() },
+                { key: "mup_minimum_unit_price", value: minimumUnitPrice.toString() },
                 ...(debugEnabled ? [
                   { key: "mup_debug", value: "true" },
-                  { key: "mup_units_per_item", value: unitsPerItem.toString() },
-                  { key: "mup_minimum_unit_price", value: minimumUnitPrice.toString() },
                 ] : []),
               ],
             },
