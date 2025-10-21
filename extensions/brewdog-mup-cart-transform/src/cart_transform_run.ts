@@ -323,6 +323,17 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
       continue;
     }
 
+    // Additional check: skip if this line has any MUP-related attributes
+    const hasMupAttributes = line.attributes?.some((attr: any) => 
+      attr.key === 'mup' || 
+      attr.key === 'mup_levy_per_item' || 
+      attr.key === 'parent_line_id'
+    );
+    if (hasMupAttributes) {
+      console.log("⏭️ Skipping line with MUP attributes (already processed)");
+      continue;
+    }
+
     const productVariant = line.merchandise as ProductVariant;
     console.log("🧮 Product variant ID:", productVariant.id);
 
