@@ -37,6 +37,10 @@ query CartTransformRunInput {
       value
       type
     }
+    enforcementEnabled: metafield(namespace: "custom", key: "mup_enforcement_enabled") {
+      value
+      type
+    }
     debugFlag: metafield(namespace: "custom", key: "mup_debug") {
       value
       type

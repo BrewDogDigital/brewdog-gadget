@@ -507,9 +507,13 @@ export const permissions: GadgetPermissions = {
         },
       },
       actions: {
+        createMupLevyProduct: true,
+        getMupSettings: true,
         manualActivateCartTransform: true,
+        mupHealthCheck: true,
         saveMupSettings: true,
         scheduledShopifySync: true,
+        setupMupMetafields: true,
       },
     },
     "shopify-storefront-customers": {

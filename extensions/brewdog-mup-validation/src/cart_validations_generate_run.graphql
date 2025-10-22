@@ -44,6 +44,9 @@ query CartValidationsGenerateRunInput {
     minimumUnitPrice: metafield(namespace: "custom", key: "minimum_unit_price") {
       value
     }
+    enforcementEnabled: metafield(namespace: "custom", key: "mup_enforcement_enabled") {
+      value
+    }
   }
 }
 

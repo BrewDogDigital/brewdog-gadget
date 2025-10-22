@@ -34,7 +34,18 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     return { operations: [{ validationAdd: { errors: [] } }] };
   }
 
-  console.log("🏴󠁧󠁢󠁳󠁣󠁴󠁿 Customer is in Scotland - validating MUP compliance");
+  console.log("🏴󠁧󠁢󠁳󠁣󠁴󠁿 Customer is in Scotland - checking if MUP enforcement is enabled");
+  
+  // Check if MUP enforcement is enabled
+  const enforcementEnabled = (input.shop as any)?.enforcementEnabled?.value;
+  console.log("⚙️ MUP enforcement enabled:", enforcementEnabled);
+  
+  if (enforcementEnabled === 'false') {
+    console.log("⏭️ MUP enforcement is disabled in settings");
+    return { operations: [{ validationAdd: { errors: [] } }] };
+  }
+
+  console.log("✅ MUP enforcement is enabled - validating MUP compliance");
   
   // Get minimum unit price from shop
   const minimumUnitPrice = parseFloat((input.shop as any)?.minimumUnitPrice?.value || "0.65");
@@ -76,7 +87,7 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
       
       errors.push({
         message: `Discounts cannot reduce the price below the Minimum Unit Pricing requirement. Current price: £${currentPricePerItem.toFixed(2)}, Minimum required: £${mupFloor.toFixed(2)}. Please remove or reduce your discount code.`,
-        target: "$.cart",
+        target: "$.checkout",
       });
     } else {
       console.log("  ✅ Price meets MUP requirements");

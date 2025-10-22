@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Page, Card, TextField, Button, InlineStack, Text, Banner, Spinner } from "@shopify/polaris";
+import { Page, Card, TextField, Button, InlineStack, Text, Banner, Spinner, BlockStack, Link, Checkbox, Divider } from "@shopify/polaris";
 import { useFindFirst } from "@gadgetinc/react";
 import { api } from "../api";
 import React from "react";
@@ -7,7 +7,10 @@ import React from "react";
 export default function MupSettingsPage() {
   const [levyVariantId, setLevyVariantId] = useState("");
   const [minimumUnitPrice, setMinimumUnitPrice] = useState("0.65");
+  const [enforcementEnabled, setEnforcementEnabled] = useState(true);
+  const [geoipEnabled, setGeoipEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [creatingLevy, setCreatingLevy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,37 +18,71 @@ export default function MupSettingsPage() {
   const [{ data: shopData, fetching: loadingShop }] = useFindFirst(api.shopifyShop, {
     select: {
       id: true,
-      mupLevyProduct: { key: true, value: true },
-      minimumUnitPrice: { key: true, value: true },
     },
   });
 
-  // Populate form when shop data loads
-  useEffect(() => {
-    if (shopData) {
-      // Use type assertion to access custom fields safely
-      const mupLevyProduct = (shopData as any).mupLevyProduct;
-      if (mupLevyProduct?.value) {
-        setLevyVariantId(mupLevyProduct.value);
+  // Load settings from the backend when component mounts
+  const loadSettings = async () => {
+    if (!shopData?.id) return;
+    
+    try {
+      const result = await (api as any).getMupSettings({});
+      if (result.success && result.settings) {
+        setLevyVariantId(result.settings.levyVariantId || "");
+        setMinimumUnitPrice(result.settings.minimumUnitPrice || "0.65");
+        setEnforcementEnabled(result.settings.enforcementEnabled !== false);
+        setGeoipEnabled(result.settings.geoipEnabled || false);
       }
-  
-      if ((shopData as any).minimumUnitPrice?.value) {
-        setMinimumUnitPrice((shopData as any).minimumUnitPrice.value);
-      }
+    } catch (e) {
+      console.error("Error loading settings:", e);
     }
-  }, [shopData]);
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, [shopData?.id]);
 
   const onSave = async () => {
     setSaving(true);
     setMessage(null);
     setError(null);
     try {
-      await api.saveMupSettings({ levyVariantId, minimumUnitPrice });
+      await api.saveMupSettings({ 
+        levyVariantId, 
+        minimumUnitPrice,
+        enforcementEnabled,
+        geoipEnabled,
+      });
       setMessage("✅ Settings saved successfully!");
     } catch (e: any) {
       setError(e.message || String(e));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const onCreateLevyProduct = async () => {
+    setCreatingLevy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const result = await (api as any).createMupLevyProduct({});
+      const newVariantId = result.product.variantId;
+      setLevyVariantId(newVariantId);
+      
+      // Automatically save the new variant ID
+      await api.saveMupSettings({ 
+        levyVariantId: newVariantId, 
+        minimumUnitPrice,
+        enforcementEnabled,
+        geoipEnabled,
+      });
+      
+      setMessage(`✅ Levy product created and saved! Product: "${result.product.title}"`);
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setCreatingLevy(false);
     }
   };
 
@@ -62,50 +99,107 @@ export default function MupSettingsPage() {
   }
 
   return (
-    <Page title="Minimum Unit Pricing">
-      <Card>
-        <InlineStack gap="400" align="start">
-          <div style={{ minWidth: 360 }}>
-            <Text as="h2" variant="headingMd">Settings</Text>
-            <div style={{ marginTop: 16 }}>
+    <Page 
+      title="Minimum Unit Pricing"
+      secondaryActions={[
+        {
+          content: "Health Check",
+          url: "/mup-health-check",
+        },
+        {
+          content: "Setup Metafields",
+          onAction: async () => {
+            try {
+              await (api as any).setupMupMetafields({});
+              setMessage("✅ Metafield definitions created successfully!");
+            } catch (e: any) {
+              setError(e.message || String(e));
+            }
+          },
+        },
+      ]}
+    >
+      <BlockStack gap="400">
+        <Banner tone="info">
+          <Text as="p">
+            Configure MUP settings for Scotland compliance. <Link url="/mup-health-check">Run a health check</Link> to scan products for missing alcohol unit data.
+          </Text>
+        </Banner>
+        
+        <Card>
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingMd">Enforcement Settings</Text>
+            
+            <Checkbox
+              label="Enable MUP Enforcement"
+              checked={enforcementEnabled}
+              onChange={setEnforcementEnabled}
+              helpText="When enabled, MUP rules will be enforced for Scotland customers"
+            />
+            
+            <Checkbox
+              label="Enable GeoIP Detection"
+              checked={geoipEnabled}
+              onChange={setGeoipEnabled}
+              helpText="Automatically detect customer location using GeoIP (experimental)"
+            />
+            
+            <Divider />
+            
+            <Text as="h2" variant="headingMd">Pricing Configuration</Text>
+            
+            <TextField
+              label="Minimum unit price (£ per unit)"
+              value={minimumUnitPrice}
+              onChange={setMinimumUnitPrice}
+              type="number"
+              autoComplete="off"
+              helpText="e.g. 0.65 (default for Scotland)"
+            />
+            
+            <BlockStack gap="200">
               <TextField
                 label="Levy product variant ID"
                 value={levyVariantId}
                 onChange={setLevyVariantId}
                 autoComplete="off"
-                helpText="Product variant used to add levy child lines"
+                helpText="Product variant ID used to add levy child lines"
+                connectedRight={
+                  <Button
+                    loading={creatingLevy}
+                    onClick={onCreateLevyProduct}
+                    disabled={saving}
+                  >
+                    Create Levy Product
+                  </Button>
+                }
               />
-            </div>
-            <div style={{ marginTop: 16 }}>
-              <TextField
-                label="Minimum unit price (£ per unit)"
-                value={minimumUnitPrice}
-                onChange={setMinimumUnitPrice}
-                type="number"
-                autoComplete="off"
-                helpText="e.g. 0.65"
-              />
-            </div>
-            <div style={{ marginTop: 16 }}>
+              <Text as="p" variant="bodySm" tone="subdued">
+                Don't have a levy product? Click "Create Levy Product" to automatically create one and configure it.
+              </Text>
+            </BlockStack>
+            
+            <Divider />
+            
+            <InlineStack gap="200">
               <Button variant="primary" loading={saving} onClick={onSave}>
-                Save
+                Save Settings
               </Button>
-            </div>
+            </InlineStack>
+            
             {message && (
-              <div style={{ marginTop: 8 }}>
+              <Banner tone="success">
                 <Text as="p" variant="bodyMd">{message}</Text>
-              </div>
+              </Banner>
             )}
             {error && (
-              <div style={{ marginTop: 8 }}>
-                <Banner tone="critical">
-                  <Text as="p" variant="bodyMd">Error: {error}</Text>
-                </Banner>
-              </div>
+              <Banner tone="critical">
+                <Text as="p" variant="bodyMd">Error: {error}</Text>
+              </Banner>
             )}
-          </div>
-        </InlineStack>
-      </Card>
+          </BlockStack>
+        </Card>
+      </BlockStack>
     </Page>
   );
 }

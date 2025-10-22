@@ -2,10 +2,14 @@
  * Saves Minimum Unit Pricing settings to Shopify shop metafields.
  * - custom.mup_levy_product: string containing the levy variant ID (e.g. "gid://shopify/ProductVariant/123")
  * - custom.minimum_unit_price: decimal number as string (e.g. "0.65")
+ * - custom.mup_enforcement_enabled: boolean to enable/disable MUP enforcement
+ * - custom.mup_geoip_enabled: boolean to enable/disable GeoIP detection
  */
 export const params = {
   levyVariantId: { type: "string", required: true },
   minimumUnitPrice: { type: "string", required: true },
+  enforcementEnabled: { type: "boolean", required: false, default: true },
+  geoipEnabled: { type: "boolean", required: false, default: false },
 };
 
 export const run = async ({ params, connections, logger }: any) => {
@@ -14,7 +18,7 @@ export const run = async ({ params, connections, logger }: any) => {
     throw new Error("No Shopify connection context");
   }
 
-  const { levyVariantId, minimumUnitPrice } = params;
+  const { levyVariantId, minimumUnitPrice, enforcementEnabled, geoipEnabled } = params;
 
   // 1) Fetch shop id
   const shopQuery = `#graphql
@@ -55,6 +59,20 @@ export const run = async ({ params, connections, logger }: any) => {
       key: "minimum_unit_price",
       type: "number_decimal",
       value: String(minimumUnitPrice),
+    },
+    {
+      ownerId: shopId,
+      namespace: "custom",
+      key: "mup_enforcement_enabled",
+      type: "boolean",
+      value: String(enforcementEnabled),
+    },
+    {
+      ownerId: shopId,
+      namespace: "custom",
+      key: "mup_geoip_enabled",
+      type: "boolean",
+      value: String(geoipEnabled),
     },
   ];
 

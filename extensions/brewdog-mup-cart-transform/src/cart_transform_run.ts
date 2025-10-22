@@ -230,7 +230,19 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
     return NO_CHANGES;
   }
 
-  console.log("🏴󠁧󠁢󠁳󠁣󠁴󠁿 Customer is in Scotland - applying MUP logic");
+  console.log("🏴󠁧󠁢󠁳󠁣󠁴󠁿 Customer is in Scotland - checking if MUP enforcement is enabled");
+
+  // Check if MUP enforcement is enabled
+  const enforcementEnabled = (input.shop as any)?.enforcementEnabled?.value;
+  console.log("⚙️ MUP enforcement enabled:", enforcementEnabled);
+  
+  if (enforcementEnabled === 'false') {
+    console.log("⏭️ MUP enforcement is disabled in settings");
+    console.log("🏁 Cart Transform Function completed - NO CHANGES (enforcement disabled)");
+    return NO_CHANGES;
+  }
+
+  console.log("✅ MUP enforcement is enabled - applying MUP logic");
 
   const operations: any[] = [];
 
