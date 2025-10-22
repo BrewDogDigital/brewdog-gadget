@@ -66,6 +66,7 @@ export const settings: GadgetSettings = {
           "read_discounts",
           "write_discounts",
           "read_products",
+          "write_products",
           "read_price_rules",
           "read_discounts_allocator_functions",
           "write_discounts_allocator_functions",
