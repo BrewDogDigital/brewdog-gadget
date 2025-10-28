@@ -37,14 +37,14 @@ function getLevyVariantId(shopMetafields: Metafield[]): string | null {
 function calculateUnitsPerItem(unitsMetafield?: Metafield | null): number {
   console.log("🔍 Checking product for alcohol units metafield...");
 
-  // Try direct units_per_item first
+  // Try direct total_units first
   if (unitsMetafield?.value) {
     const units = parseFloat(unitsMetafield.value);
-    console.log("✅ Found units_per_item metafield with value:", units);
+    console.log("✅ Found total_units metafield with value:", units);
     return units;
   }
 
-  console.log("❌ No units_per_item metafield found on product");
+  console.log("❌ No total_units metafield found on product");
   // For now, return 0 if no units metafield - you can extend this later
   // to handle ABV × volume calculation if needed
   return 0;
@@ -193,7 +193,7 @@ function createLevyOperation(
             // Optional debug attributes for live inspection
             ...(debugEnabled && debugData ? [
               { key: "mup_debug", value: "true" },
-              { key: "mup_units_per_item", value: debugData.unitsPerItem.toString() },
+              { key: "mup_total_units", value: debugData.unitsPerItem.toString() },
               { key: "mup_minimum_unit_price", value: debugData.minimumUnitPrice.toString() },
               { key: "mup_current_price_per_unit", value: debugData.currentPricePerUnit.toString() },
               { key: "mup_floor", value: debugData.mupFloor.toString() },
@@ -423,7 +423,7 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
                   value: line.id,
                 },
                 // These attributes are required for validation function to recalculate levy
-                { key: "mup_units_per_item", value: unitsPerItem.toString() },
+                { key: "mup_total_units", value: unitsPerItem.toString() },
                 { key: "mup_minimum_unit_price", value: minimumUnitPrice.toString() },
                 ...(debugEnabled ? [
                   { key: "mup_debug", value: "true" },

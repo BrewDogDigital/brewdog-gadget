@@ -2,7 +2,7 @@
  * MUP Health Check Action
  * 
  * Scans all products to identify those missing alcohol unit data required for MUP compliance.
- * Returns products that need units_per_item metafields or ABV% + volume data.
+ * Returns products that need total_units metafields or ABV% + volume data.
  */
 export const params = {
   limit: { type: "number", required: false, default: 50 },
@@ -42,7 +42,7 @@ export const run = async ({ params, connections, logger }: any) => {
                     id
                     title
                     sku
-                    unitsPerItem: metafield(namespace: "custom", key: "units_per_item") {
+                    unitsPerItem: metafield(namespace: "custom", key: "total_units") {
                       id
                       value
                       type
@@ -190,7 +190,7 @@ function analyzeVariant(variant: any) {
     recommendations: [],
   };
 
-  // Check for direct units_per_item metafield (aliased as unitsPerItem)
+  // Check for direct total_units metafield (aliased as unitsPerItem)
   if (variant.unitsPerItem?.value) {
     analysis.hasUnitsPerItem = true;
     analysis.unitsPerItem = parseFloat(variant.unitsPerItem.value);
@@ -213,7 +213,7 @@ function analyzeVariant(variant: any) {
   if (analysis.hasABV && analysis.hasVolume) {
     analysis.calculatedUnits = (analysis.abvPercentage * analysis.volumeMl) / 1000; // ABV% * volume(ml) / 1000
     analysis.status = 'complete';
-    analysis.recommendations.push('Consider adding units_per_item metafield for direct specification');
+    analysis.recommendations.push('Consider adding total_units metafield for direct specification');
   } else if (analysis.hasABV || analysis.hasVolume) {
     analysis.status = 'partial';
     analysis.issues.push('Missing ABV% or volume data for unit calculation');

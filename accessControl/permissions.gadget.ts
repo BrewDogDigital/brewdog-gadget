@@ -514,6 +514,7 @@ export const permissions: GadgetPermissions = {
         saveMupSettings: true,
         scheduledShopifySync: true,
         setupMupMetafields: true,
+        updateVariantMetafield: true,
       },
     },
     "shopify-storefront-customers": {

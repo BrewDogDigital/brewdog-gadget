@@ -69,8 +69,8 @@ export const run = async ({ connections, logger }: any) => {
       {
         name: "Alcohol Units Per Item",
         namespace: "custom",
-        key: "units_per_item",
-        description: "Number of alcohol units in this product (used for MUP calculation)",
+        key: "total_units",
+        description: "Total number of alcohol units in this product (used for MUP calculation)",
         type: "number_decimal",
         ownerType: "PRODUCTVARIANT",
         validations: [

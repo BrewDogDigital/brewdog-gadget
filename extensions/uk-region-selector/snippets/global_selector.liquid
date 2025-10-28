@@ -1,0 +1,405 @@
+{% comment %}
+  UK Region Selector - App Embed
+  Auto-injects globally in the body
+{% endcomment %}
+
+<!-- REGION SELECTOR LOADED -->
+
+<style>
+.uk-region-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.uk-region-selector__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text, #000);
+}
+.uk-region-selector__select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-text, #000);
+  background-color: var(--color-background, #fff);
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 0.375rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  cursor: pointer;
+}
+.uk-region-selector__select:hover {
+  border-color: var(--color-border-hover, #9ca3af);
+}
+.uk-region-selector__select:focus {
+  outline: none;
+  border-color: var(--color-primary, #000);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+.uk-region-selector__wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.uk-region-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.uk-region-modal__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+}
+.uk-region-modal__content {
+  position: relative;
+  background-color: #fff;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  z-index: 10000;
+  animation: modalFadeIn 0.3s ease-out;
+}
+.uk-region-modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  transition: opacity 0.2s;
+}
+.uk-region-modal__close:hover {
+  opacity: 0.7;
+}
+.uk-region-modal__close svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.uk-region-modal__header {
+  margin-bottom: 1.5rem;
+  padding-right: 2rem;
+}
+.uk-region-modal__title {
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #000;
+}
+.uk-region-modal__description {
+  color: #6b7280;
+  line-height: 1.6;
+}
+.uk-region-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.uk-region-modal__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000;
+}
+.uk-region-modal__select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #000;
+  background-color: #fff;
+  border: 2px solid #d1d5db;
+  border-radius: 0.375rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  cursor: pointer;
+}
+.uk-region-modal__select:hover {
+  border-color: #9ca3af;
+}
+.uk-region-modal__select:focus {
+  outline: none;
+  border-color: #000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+.uk-region-modal__submit {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.uk-region-modal__submit:hover {
+  opacity: 0.9;
+}
+.uk-region-modal__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
+
+<div 
+  id="uk-region-selector-global"
+  class="uk-region-selector-app-embed uk-region-selector--global"
+  style="display: none;"
+>
+  <div class="uk-region-selector__wrapper">
+    <label for="uk-region-select-global" class="uk-region-selector__label">
+      {{ app.settings.label_text | default: "Your Region:" }}
+    </label>
+    
+    <select
+      id="uk-region-select-global"
+      class="uk-region-selector__select"
+      data-region-select
+    >
+      <option value="">{{ app.settings.placeholder_text | default: "Select Region" }}</option>
+      <option value="england">England</option>
+      <option value="scotland">Scotland</option>
+      <option value="wales">Wales</option>
+      <option value="northern_ireland">Northern Ireland</option>
+    </select>
+  </div>
+</div>
+
+<!-- Modal markup -->
+<div 
+  id="uk-region-modal-global"
+  class="uk-region-modal"
+  style="display: none;"
+  role="dialog"
+  aria-labelledby="uk-region-modal-title-global"
+  aria-modal="true"
+>
+  <div class="uk-region-modal__overlay" data-modal-close></div>
+  
+  <div class="uk-region-modal__content">
+    <button 
+      class="uk-region-modal__close"
+      aria-label="Close"
+      data-modal-close
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    
+    <div class="uk-region-modal__header">
+      <h2 id="uk-region-modal-title-global" class="uk-region-modal__title">
+        Select Your Region
+      </h2>
+      <p class="uk-region-modal__description">
+        Please select your region for accurate pricing and compliance information.
+      </p>
+    </div>
+    
+    <div class="uk-region-modal__body">
+      <label for="uk-region-modal-select-global" class="uk-region-modal__label">
+        Your Region:
+      </label>
+      
+      <select
+        id="uk-region-modal-select-global"
+        class="uk-region-modal__select"
+        data-modal-select
+      >
+        <option value="">Choose a region...</option>
+        <option value="england">England</option>
+        <option value="scotland">Scotland</option>
+        <option value="wales">Wales</option>
+        <option value="northern_ireland">Northern Ireland</option>
+      </select>
+      
+      <button 
+        class="uk-region-modal__submit"
+        data-modal-submit
+        disabled
+      >
+        Confirm Selection
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const COOKIE_NAME = "mup_region";
+  const COOKIE_EXPIRY_DAYS = 180;
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      return parts.pop().split(';').shift();
+    }
+    return null;
+  }
+
+  function setCookie(name, value, days) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = `expires=${date.toUTCString()}`;
+    document.cookie = `${name}=${value};${expires};path=/`;
+  }
+
+  async function setCartAttribute(region) {
+    try {
+      const response = await fetch('/cart/update.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attributes: {
+            uk_region: region,
+            _uk_region_updated: new Date().toISOString()
+          }
+        })
+      });
+      if (response.ok) {
+        console.log('[Region Selector] Cart attribute updated:', region);
+      }
+    } catch (error) {
+      console.error('[Region Selector] Failed to update cart:', error);
+    }
+  }
+
+  function init() {
+    console.log('[Region Selector] Initializing...');
+    
+    const container = document.getElementById('uk-region-selector-global');
+    const modal = document.getElementById('uk-region-modal-global');
+    
+    console.log('[Region Selector] Container:', container);
+    console.log('[Region Selector] Modal:', modal);
+    
+    if (!container || !modal) {
+      console.error('[Region Selector] Container or modal not found!');
+      return;
+    }
+
+    const select = container.querySelector('[data-region-select]');
+    const modalSelect = modal.querySelector('[data-modal-select]');
+    const modalSubmit = modal.querySelector('[data-modal-submit]');
+    const modalCloseButtons = modal.querySelectorAll('[data-modal-close]');
+
+    // Show selector
+    container.style.display = 'flex';
+    console.log('[Region Selector] Container displayed');
+
+    // Load saved region
+    const savedRegion = getCookie(COOKIE_NAME);
+    console.log('[Region Selector] Saved region:', savedRegion);
+    
+    if (savedRegion) {
+      if (select) select.value = savedRegion;
+      console.log('[Region Selector] Region loaded from cookie');
+    } else {
+      // No saved region - show modal
+      console.log('[Region Selector] No saved region, showing modal...');
+      setTimeout(() => {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        console.log('[Region Selector] Modal should be visible now');
+      }, 500);
+    }
+
+  // Handle selector change
+  if (select) {
+    select.addEventListener('change', async (e) => {
+      const region = e.target.value;
+      if (region) {
+        setCookie(COOKIE_NAME, region, COOKIE_EXPIRY_DAYS);
+        await setCartAttribute(region);
+        
+        // Sync modal select
+        if (modalSelect) modalSelect.value = region;
+        
+        // Trigger advisory updates
+        window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
+      }
+    });
+  }
+
+  // Handle modal select change
+  if (modalSelect) {
+    modalSelect.addEventListener('change', (e) => {
+      const selected = e.target.value;
+      if (modalSubmit) {
+        modalSubmit.disabled = !selected;
+      }
+    });
+  }
+
+  // Handle modal submit
+  if (modalSubmit) {
+    modalSubmit.addEventListener('click', async () => {
+      const region = modalSelect?.value;
+      if (region) {
+        setCookie(COOKIE_NAME, region, COOKIE_EXPIRY_DAYS);
+        await setCartAttribute(region);
+        
+        // Update selector
+        if (select) select.value = region;
+        
+        // Close modal
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        
+        // Trigger advisory updates
+        window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
+      }
+    });
+  }
+
+    // Handle modal close
+    modalCloseButtons?.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      });
+    });
+  }
+
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>

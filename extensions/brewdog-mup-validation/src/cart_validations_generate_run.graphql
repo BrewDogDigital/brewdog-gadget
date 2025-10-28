@@ -12,7 +12,7 @@ query CartValidationsGenerateRunInput {
       parentLineAttribute: attribute(key: "parent_line_id") {
         value
       }
-      unitsAttribute: attribute(key: "mup_units_per_item") {
+      unitsAttribute: attribute(key: "mup_total_units") {
         value
       }
       minPriceAttribute: attribute(key: "mup_minimum_unit_price") {
@@ -25,7 +25,7 @@ query CartValidationsGenerateRunInput {
         __typename
         ... on ProductVariant {
           id
-          metafield(namespace: "custom", key: "units_per_item") {
+          metafield(namespace: "custom", key: "total_units") {
             value
           }
         }

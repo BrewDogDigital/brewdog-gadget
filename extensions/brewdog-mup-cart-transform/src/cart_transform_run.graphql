@@ -19,7 +19,7 @@ query CartTransformRunInput {
           product {
             id
           }
-          metafield(namespace: "custom", key: "units_per_item") {
+          metafield(namespace: "custom", key: "total_units") {
             value
             type
           }

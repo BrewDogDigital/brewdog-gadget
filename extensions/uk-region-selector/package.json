@@ -1,0 +1,8 @@
+{
+  "name": "uk-region-selector",
+  "version": "1.0.0",
+  "description": "UK region selector for MUP compliance - Theme app extension",
+  "private": true,
+  "type": "module"
+}
+
