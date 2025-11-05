@@ -10,7 +10,7 @@ handle = "uwp-brewdog-v2"
 dev_store_url = "testing-store-danny.myshopify.com"
 
 [webhooks]
-api_version = "2024-07"
+api_version = "2025-07"
 
 [auth]
 redirect_urls = [
