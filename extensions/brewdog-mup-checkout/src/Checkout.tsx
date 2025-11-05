@@ -15,12 +15,31 @@ import {
   useTranslate,
   useDiscountCodes,
   useApplyDiscountCodeChange,
+  useBillingAddress,
+  useShippingAddress,
 } from '@shopify/ui-extensions-react/checkout';
 
 export default reactExtension(
   'purchase.checkout.block.render',
   () => <MupCheckoutGuidance />,
 );
+
+/**
+ * Check if a postcode is Scottish
+ */
+function isScottishPostcode(postcode: string | null | undefined): boolean {
+  if (!postcode) return false;
+  
+  const normalized = postcode.trim().toUpperCase().replace(/\s+/g, '');
+  
+  const scottishPrefixes = [
+    'AB', 'DD', 'DG', 'EH', 'FK', 'G', 
+    'HS', 'IV', 'KA', 'KW', 'KY', 'ML', 
+    'PA', 'PH', 'TD', 'ZE'
+  ];
+  
+  return scottishPrefixes.some(prefix => normalized.startsWith(prefix));
+}
 
 function MupCheckoutGuidance() {
   const translate = useTranslate();
@@ -29,10 +48,63 @@ function MupCheckoutGuidance() {
   const discountCodes = useDiscountCodes();
   const applyDiscountCodeChange = useApplyDiscountCodeChange();
   const [isRemovingDiscount, setIsRemovingDiscount] = useState(false);
+  
+  // Get addresses
+  const billingAddress = useBillingAddress();
+  const shippingAddress = useShippingAddress();
 
 
 
-  // Only show for Scotland customers
+  // Check for Scottish billing address mismatch
+  const billingPostcode = billingAddress?.zip;
+  const shippingPostcode = shippingAddress?.zip;
+  const isBillingScottish = isScottishPostcode(billingPostcode);
+  const isShippingScottish = isScottishPostcode(shippingPostcode);
+  
+  console.log('Address check:', { 
+    ukRegion, 
+    billingPostcode, 
+    shippingPostcode,
+    isBillingScottish,
+    isShippingScottish
+  });
+  
+  // Show warning if Scottish address detected but region not set to Scotland
+  const hasScottishAddressMismatch = (isBillingScottish || isShippingScottish) && ukRegion !== 'scotland';
+  
+  // If customer has Scottish address but hasn't selected Scotland, show critical warning
+  if (hasScottishAddressMismatch) {
+    return (
+      <Banner status="critical">
+        <BlockStack spacing="base">
+          <Heading level={2}>⚠️ Scottish Address Detected</Heading>
+          
+          <Text>
+            {isBillingScottish && `Your billing address (${billingPostcode}) is in Scotland. `}
+            {isShippingScottish && `Your delivery address (${shippingPostcode}) is in Scotland. `}
+            Minimum Unit Pricing (MUP) must be applied for Scottish addresses.
+          </Text>
+
+          <Divider />
+
+          <BlockStack spacing="tight">
+            <Text emphasis="bold">Action Required:</Text>
+            <List>
+              <ListItem>Return to your cart</ListItem>
+              <ListItem>Select "Scotland" as your region</ListItem>
+              <ListItem>Return to checkout to complete your order</ListItem>
+            </List>
+          </BlockStack>
+          
+          <Text size="small" appearance="subdued">
+            If you complete this order without selecting Scotland as your region, it will be held for manual review before fulfillment.
+          </Text>
+        </BlockStack>
+      </Banner>
+    );
+  }
+  
+  // Only show MUP info for Scotland customers
   if (ukRegion !== 'scotland') {
     console.log('❌ Not showing MUP UI - customer not in Scotland, ukRegion:', ukRegion);
     return null;

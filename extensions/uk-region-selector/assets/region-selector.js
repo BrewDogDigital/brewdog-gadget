@@ -120,6 +120,31 @@
     }
   }
 
+  // Trigger cart transform by updating cart
+  async function triggerCartTransform() {
+    try {
+      // Get current cart
+      const cartResponse = await fetch('/cart.js');
+      const cart = await cartResponse.json();
+      
+      if (cart.items && cart.items.length > 0) {
+        // Update first item quantity to same value to trigger cart transform
+        const firstItem = cart.items[0];
+        await fetch('/cart/change.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: firstItem.key,
+            quantity: firstItem.quantity
+          })
+        });
+        console.log('[UK Region Selector] Cart transform triggered');
+      }
+    } catch (error) {
+      console.error('[UK Region Selector] Failed to trigger cart transform:', error);
+    }
+  }
+
   // Ensure cart attribute exists
   async function ensureCartAttributeExists(region) {
     try {
@@ -298,6 +323,14 @@
         document.querySelectorAll('[data-region-select]').forEach(s => {
           s.value = region;
         });
+        
+        // If changed to Scotland, trigger cart transform to add MUP
+        if (region === 'scotland') {
+          console.log('[UK Region Selector] Changed to Scotland - triggering MUP cart transform...');
+          await triggerCartTransform();
+          console.log('[UK Region Selector] Reloading page to show MUP...');
+          window.location.reload();
+        }
       });
     }
 
@@ -323,6 +356,14 @@
             // Close modal
             modal.style.display = 'none';
             document.body.style.overflow = '';
+            
+            // If changed to Scotland, trigger cart transform to add MUP
+            if (region === 'scotland') {
+              console.log('[UK Region Selector] Changed to Scotland - triggering MUP cart transform...');
+              await triggerCartTransform();
+              console.log('[UK Region Selector] Reloading page to show MUP...');
+              window.location.reload();
+            }
           }
         });
       }

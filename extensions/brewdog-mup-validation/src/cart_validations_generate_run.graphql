@@ -3,6 +3,28 @@ query CartValidationsGenerateRunInput {
     attribute(key: "uk_region") {
       value
     }
+    buyerIdentity {
+      email
+      phone
+      customer {
+        id
+      }
+      purchasingCompany {
+        company {
+          id
+        }
+      }
+    }
+    deliveryGroups {
+      deliveryAddress {
+        address1
+        address2
+        city
+        provinceCode
+        countryCode
+        zip
+      }
+    }
     lines {
       id
       quantity

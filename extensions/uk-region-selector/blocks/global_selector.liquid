@@ -292,9 +292,34 @@
       });
       if (response.ok) {
         console.log('[Region Selector] Cart attribute updated:', region);
+        return await response.json();
       }
     } catch (error) {
       console.error('[Region Selector] Failed to update cart:', error);
+    }
+  }
+
+  async function triggerCartTransform() {
+    try {
+      // Get current cart to trigger transform
+      const cartResponse = await fetch('/cart.js');
+      const cart = await cartResponse.json();
+      
+      if (cart.items && cart.items.length > 0) {
+        // Update first item quantity to same value to trigger cart transform
+        const firstItem = cart.items[0];
+        await fetch('/cart/change.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: firstItem.key,
+            quantity: firstItem.quantity
+          })
+        });
+        console.log('[Region Selector] Cart transform triggered');
+      }
+    } catch (error) {
+      console.error('[Region Selector] Failed to trigger cart transform:', error);
     }
   }
 
@@ -316,6 +341,34 @@
     const modalSelect = modal.querySelector('[data-modal-select]');
     const modalSubmit = modal.querySelector('[data-modal-submit]');
     const modalCloseButtons = modal.querySelectorAll('[data-modal-close]');
+
+    // Auto-inject selector into specified element
+    const autoInjectSelector = "{{ block.settings.auto_inject_selector }}";
+    const injectPosition = "{{ block.settings.inject_position | default: 'prepend' }}";
+    
+    if (autoInjectSelector) {
+      console.log('[Region Selector] Auto-inject selector:', autoInjectSelector);
+      console.log('[Region Selector] Inject position:', injectPosition);
+      
+      const targetElement = document.querySelector(autoInjectSelector);
+      if (targetElement) {
+        console.log('[Region Selector] Target element found, injecting...');
+        
+        // Remove from current position
+        container.remove();
+        
+        // Inject at specified position
+        if (injectPosition === 'prepend') {
+          targetElement.prepend(container);
+        } else {
+          targetElement.append(container);
+        }
+        
+        console.log('[Region Selector] Injected into:', autoInjectSelector);
+      } else {
+        console.warn('[Region Selector] Target element not found:', autoInjectSelector);
+      }
+    }
 
     // Show selector
     container.style.display = 'flex';
@@ -351,6 +404,14 @@
         
         // Trigger advisory updates
         window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
+        
+        // If changed to Scotland, trigger cart transform to add MUP
+        if (region === 'scotland') {
+          console.log('[Region Selector] Changed to Scotland - triggering MUP cart transform...');
+          await triggerCartTransform();
+          console.log('[Region Selector] Reloading page to show MUP...');
+          window.location.reload();
+        }
       }
     });
   }
@@ -382,6 +443,14 @@
         
         // Trigger advisory updates
         window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
+        
+        // If changed to Scotland, trigger cart transform to add MUP
+        if (region === 'scotland') {
+          console.log('[Region Selector] Changed to Scotland - triggering MUP cart transform...');
+          await triggerCartTransform();
+          console.log('[Region Selector] Reloading page to show MUP...');
+          window.location.reload();
+        }
       }
     });
   }
@@ -409,6 +478,29 @@
   "name": "Global Region Selector",
   "target": "body",
   "settings": [
+    {
+      "type": "text",
+      "id": "auto_inject_selector",
+      "label": "Auto-inject CSS Selector",
+      "info": "e.g., .header__top, #site-header, .utility-bar - Where to inject the region selector",
+      "default": "header"
+    },
+    {
+      "type": "select",
+      "id": "inject_position",
+      "label": "Injection Position",
+      "options": [
+        {
+          "value": "prepend",
+          "label": "Beginning of element"
+        },
+        {
+          "value": "append",
+          "label": "End of element"
+        }
+      ],
+      "default": "prepend"
+    },
     {
       "type": "text",
       "id": "label_text",

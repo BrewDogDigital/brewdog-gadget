@@ -11,6 +11,27 @@ name = "Global Region Selector"
 type = "global_selector"
 
   [[extensions.settings.app_embed.settings]]
+  id = "auto_inject_selector"
+  type = "text"
+  label = "Auto-inject CSS Selector"
+  info = "e.g., .header__top, #site-header, .utility-bar - Where to inject the region selector"
+  default = "header"
+
+  [[extensions.settings.app_embed.settings]]
+  id = "inject_position"
+  type = "select"
+  label = "Injection Position"
+  default = "prepend"
+  
+    [[extensions.settings.app_embed.settings.options]]
+    value = "prepend"
+    label = "Beginning of element"
+    
+    [[extensions.settings.app_embed.settings.options]]
+    value = "append"
+    label = "End of element"
+
+  [[extensions.settings.app_embed.settings]]
   id = "label_text"
   type = "text"
   label = "Label Text"

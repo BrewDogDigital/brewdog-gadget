@@ -63,6 +63,8 @@ export const settings: GadgetSettings = {
           "read_orders",
           "write_orders",
           "read_fulfillments",
+          "read_assigned_fulfillment_orders",
+          "write_assigned_fulfillment_orders",
           "read_discounts",
           "write_discounts",
           "read_products",
