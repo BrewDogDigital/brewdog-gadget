@@ -27,6 +27,9 @@ export const run = async ({ connections, logger }: any) => {
           geoipEnabled: metafield(namespace: "custom", key: "mup_geoip_enabled") {
             value
           }
+          overrideCodes: metafield(namespace: "custom", key: "mup_override_codes") {
+            value
+          }
         }
       }
     `;
@@ -45,6 +48,7 @@ export const run = async ({ connections, logger }: any) => {
         minimumUnitPrice: shop.minimumUnitPrice?.value || "0.65",
         enforcementEnabled: shop.enforcementEnabled?.value === "true",
         geoipEnabled: shop.geoipEnabled?.value === "true",
+        overrideCodes: shop.overrideCodes?.value || "",
       },
     };
 

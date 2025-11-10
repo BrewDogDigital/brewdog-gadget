@@ -44,7 +44,7 @@ function isScottishPostcode(postcode: string | null | undefined): boolean {
 function MupCheckoutGuidance() {
   const translate = useTranslate();
   const cartLines = useCartLines();
-  const [ukRegion] = useAttributeValues(['uk_region']);
+  const [ukRegion, mupOverride] = useAttributeValues(['uk_region', 'mup_override']);
   const discountCodes = useDiscountCodes();
   const applyDiscountCodeChange = useApplyDiscountCodeChange();
   const [isRemovingDiscount, setIsRemovingDiscount] = useState(false);
@@ -52,6 +52,10 @@ function MupCheckoutGuidance() {
   // Get addresses
   const billingAddress = useBillingAddress();
   const shippingAddress = useShippingAddress();
+  
+  // Check if MUP override is active
+  const hasOverride = mupOverride === 'true';
+  console.log('MUP Override active:', hasOverride);
 
 
 
@@ -156,8 +160,8 @@ function MupCheckoutGuidance() {
       {/* MUP Notice Banner */}
 
 
-      {/* Repair UI - Show when discount is applied in Scotland */}
-      {hasDiscountApplied && (
+      {/* Repair UI - Show when discount is applied in Scotland (but NOT if override is active) */}
+      {hasDiscountApplied && !hasOverride && (
         <Banner status="critical">
           <BlockStack spacing="base">
             <Heading level={3}>Checkout Blocked - MUP Violation</Heading>
@@ -191,6 +195,18 @@ function MupCheckoutGuidance() {
                 This will remove your discount code and allow checkout to proceed.
               </Text>
             </BlockStack>
+          </BlockStack>
+        </Banner>
+      )}
+      
+      {/* Show override success message */}
+      {hasDiscountApplied && hasOverride && (
+        <Banner status="success">
+          <BlockStack spacing="tight">
+            <Text emphasis="bold">✓ Override Code Detected</Text>
+            <Text size="small">
+              MUP enforcement has been bypassed for this order. You may proceed to checkout.
+            </Text>
           </BlockStack>
         </Banner>
       )}

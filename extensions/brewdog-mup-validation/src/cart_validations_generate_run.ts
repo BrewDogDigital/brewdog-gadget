@@ -48,6 +48,23 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
 
   const errors: ValidationError[] = [];
 
+  // Skip validation if cart is empty
+  if (!input.cart.lines || input.cart.lines.length === 0) {
+    console.log("⏭️ Cart is empty - skipping validation");
+    return { operations: [{ validationAdd: { errors: [] } }] };
+  }
+
+  // Check for MUP override attribute (set by frontend when override discount code is detected)
+  const overrideAttribute = (input.cart as any).overrideAttribute;
+  const hasOverride = overrideAttribute?.value === 'true';
+  
+  console.log("MUP Override attribute:", hasOverride);
+  
+  if (hasOverride) {
+    console.log("MUP enforcement BYPASSED due to override cart attribute");
+    return { operations: [{ validationAdd: { errors: [] } }] };
+  }
+
   // Check if customer is in Scotland
   const ukRegionAttribute = (input.cart as any).attribute;
   const ukRegion = ukRegionAttribute?.value;
@@ -90,7 +107,7 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     }
     
     if (scottishPostcodeDetected) {
-      console.log("❌ SCOTTISH DELIVERY ADDRESS DETECTED but region is not Scotland!");
+      console.log("SCOTTISH DELIVERY ADDRESS DETECTED but region is not Scotland!");
       console.log("   Postcode:", detectedPostcode);
       
       // Use $.cart as target for better visibility
@@ -99,8 +116,8 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
         target: "$.cart",
       });
       
-      console.log("🚫 Returning validation error to block checkout");
-      console.log("🎯 Target: $.cart");
+      console.log("Returning validation error to block checkout");
+      console.log("Target: $.cart");
       
       return {
         operations: [{
@@ -133,6 +150,26 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
   // Get minimum unit price from shop
   const minimumUnitPrice = parseFloat((input.shop as any)?.minimumUnitPrice?.value || "0.65");
   console.log("💰 Minimum unit price:", minimumUnitPrice);
+
+  // Check if cart has any alcoholic products
+  let hasAlcoholicProducts = false;
+  for (const line of input.cart.lines) {
+    const variant = line.merchandise;
+    if (variant.__typename === "ProductVariant") {
+      const unitsPerItem = parseFloat((variant as any).metafield?.value || "0");
+      if (unitsPerItem > 0) {
+        hasAlcoholicProducts = true;
+        break;
+      }
+    }
+  }
+
+  if (!hasAlcoholicProducts) {
+    console.log("⏭️ Cart has no alcoholic products - skipping MUP validation");
+    return { operations: [{ validationAdd: { errors: [] } }] };
+  }
+
+  console.log("🍺 Cart contains alcoholic products - proceeding with MUP validation");
 
   // Check each product line to see if discounted price would violate MUP
   input.cart.lines.forEach(line => {

@@ -9,6 +9,8 @@ export default function MupSettingsPage() {
   const [minimumUnitPrice, setMinimumUnitPrice] = useState("0.65");
   const [enforcementEnabled, setEnforcementEnabled] = useState(true);
   const [geoipEnabled, setGeoipEnabled] = useState(false);
+  const [overrideCodes, setOverrideCodes] = useState<string[]>([]);
+  const [newCodeInput, setNewCodeInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [creatingLevy, setCreatingLevy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -32,6 +34,14 @@ export default function MupSettingsPage() {
         setMinimumUnitPrice(result.settings.minimumUnitPrice || "0.65");
         setEnforcementEnabled(result.settings.enforcementEnabled !== false);
         setGeoipEnabled(result.settings.geoipEnabled || false);
+        
+        // Parse override codes from string to array
+        const codesString = result.settings.overrideCodes || "";
+        const codesArray = codesString
+          .split(/[,\n]+/)
+          .map((code: string) => code.trim().toUpperCase())
+          .filter((code: string) => code.length > 0);
+        setOverrideCodes(codesArray);
       }
     } catch (e) {
       console.error("Error loading settings:", e);
@@ -47,11 +57,15 @@ export default function MupSettingsPage() {
     setMessage(null);
     setError(null);
     try {
-      await api.saveMupSettings({ 
+      // Convert override codes array back to comma-separated string
+      const overrideCodesString = overrideCodes.join(',');
+      
+      await (api as any).saveMupSettings({ 
         levyVariantId, 
         minimumUnitPrice,
         enforcementEnabled,
         geoipEnabled,
+        overrideCodes: overrideCodesString,
       });
       setMessage("✅ Settings saved successfully!");
     } catch (e: any) {
@@ -60,6 +74,29 @@ export default function MupSettingsPage() {
       setSaving(false);
     }
   };
+
+  const addOverrideCode = () => {
+    const code = newCodeInput.trim().toUpperCase();
+    
+    if (!code) {
+      setError("Please enter a discount code");
+      return;
+    }
+    
+    if (overrideCodes.includes(code)) {
+      setError(`Code "${code}" already exists`);
+      return;
+    }
+    
+    setOverrideCodes([...overrideCodes, code]);
+    setNewCodeInput("");
+    setError(null);
+  };
+
+  const removeOverrideCode = (codeToRemove: string) => {
+    setOverrideCodes(overrideCodes.filter(code => code !== codeToRemove));
+  };
+
 
   const onCreateLevyProduct = async () => {
     setCreatingLevy(true);
@@ -71,13 +108,15 @@ export default function MupSettingsPage() {
       setLevyVariantId(newVariantId);
       
       // Automatically save the new variant ID
-      await api.saveMupSettings({ 
+      const overrideCodesString = overrideCodes.join(',');
+      await (api as any).saveMupSettings({ 
         levyVariantId: newVariantId, 
         minimumUnitPrice,
         enforcementEnabled,
         geoipEnabled,
+        overrideCodes: overrideCodesString,
       });
-      
+
       setMessage(`✅ Levy product created and saved! Product: "${result.product.title}"`);
     } catch (e: any) {
       setError(e.message || String(e));
@@ -177,6 +216,91 @@ export default function MupSettingsPage() {
               <Text as="p" variant="bodySm" tone="subdued">
                 Don't have a levy product? Click "Create Levy Product" to automatically create one and configure it.
               </Text>
+            </BlockStack>
+            
+            <Divider />
+            
+            <Text as="h2" variant="headingMd">Discount Override Codes</Text>
+            
+            <Text as="p" variant="bodySm" tone="subdued">
+              Discount codes that bypass MUP enforcement. Use this for customer service codes, staff allowances, or approved promotional campaigns.
+            </Text>
+            
+            <BlockStack gap="300">
+              <InlineStack gap="200" blockAlign="end">
+                <div style={{ flexGrow: 1 }}>
+                  <TextField
+                    label="Add new override code"
+                    value={newCodeInput}
+                    onChange={setNewCodeInput}
+                    autoComplete="off"
+                    placeholder="Enter code (e.g., CS100, STAFF50)"
+                  />
+                </div>
+                <Button onClick={addOverrideCode}>
+                  Add Code
+                </Button>
+              </InlineStack>
+              
+              {overrideCodes.length > 0 ? (
+                <BlockStack gap="200">
+                  <Text as="p" variant="bodyMd" fontWeight="semibold">
+                    Active Override Codes ({overrideCodes.length})
+                  </Text>
+                  <div style={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: '0.5rem',
+                    padding: '1rem',
+                    backgroundColor: '#f6f6f7',
+                    borderRadius: '8px',
+                    border: '1px solid #e1e3e5'
+                  }}>
+                    {overrideCodes.map((code) => (
+                      <div
+                        key={code}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.5rem 0.75rem',
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #c9cccf',
+                          borderRadius: '6px',
+                          fontSize: '0.875rem',
+                          fontWeight: '600',
+                          fontFamily: 'monospace'
+                        }}
+                      >
+                        <span style={{ color: '#202223' }}>{code}</span>
+                        <button
+                          onClick={() => removeOverrideCode(code)}
+                          style={{
+                            border: 'none',
+                            background: 'none',
+                            cursor: 'pointer',
+                            padding: '0.25rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: '#bf0711',
+                            fontSize: '1rem',
+                            lineHeight: '1'
+                          }}
+                          aria-label={`Remove ${code}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </BlockStack>
+              ) : (
+                <Banner tone="info">
+                  <Text as="p" variant="bodyMd">
+                    No override codes configured. Add codes above to bypass MUP enforcement for specific discount codes.
+                  </Text>
+                </Banner>
+              )}
             </BlockStack>
             
             <Divider />

@@ -65,6 +65,14 @@ export const run = async ({ connections, logger }: any) => {
         type: "boolean",
         ownerType: "SHOP",
       },
+      {
+        name: "MUP Override Discount Codes",
+        namespace: "custom",
+        key: "mup_override_codes",
+        description: "Comma-separated list of discount codes that bypass MUP enforcement (e.g. CS100,STAFF50,PROMO2024)",
+        type: "multi_line_text_field",
+        ownerType: "SHOP",
+      },
       // Product variant-level metafields
       {
         name: "Alcohol Units Per Item",

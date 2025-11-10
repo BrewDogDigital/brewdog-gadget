@@ -10,6 +10,7 @@ export const params = {
   minimumUnitPrice: { type: "string", required: true },
   enforcementEnabled: { type: "boolean", required: false, default: true },
   geoipEnabled: { type: "boolean", required: false, default: false },
+  overrideCodes: { type: "string", required: false, default: "" },
 };
 
 export const run = async ({ params, connections, logger }: any) => {
@@ -18,7 +19,7 @@ export const run = async ({ params, connections, logger }: any) => {
     throw new Error("No Shopify connection context");
   }
 
-  const { levyVariantId, minimumUnitPrice, enforcementEnabled, geoipEnabled } = params;
+  const { levyVariantId, minimumUnitPrice, enforcementEnabled, geoipEnabled, overrideCodes } = params;
 
   // 1) Fetch shop id
   const shopQuery = `#graphql
@@ -73,6 +74,13 @@ export const run = async ({ params, connections, logger }: any) => {
       key: "mup_geoip_enabled",
       type: "boolean",
       value: String(geoipEnabled),
+    },
+    {
+      ownerId: shopId,
+      namespace: "custom",
+      key: "mup_override_codes",
+      type: "multi_line_text_field",
+      value: String(overrideCodes),
     },
   ];
 

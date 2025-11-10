@@ -419,5 +419,288 @@
     }
   });
 
+  // ============================================================================
+  // MUP DISCOUNT OVERRIDE DETECTION
+  // ============================================================================
+  // This runs on the cart page to detect if an override discount code is applied.
+  // If detected, it sets a cart attribute that the validation function can read.
+  
+async function checkForOverrideDiscount() {
+  try {
+    // Fetch current cart
+    const cartResponse = await fetch('/cart.js');
+    const cart = await cartResponse.json();
+    
+    console.log('[MUP Override] Checking cart for discounts...', {
+      pathname: window.location.pathname,
+      cartItemCount: cart.item_count
+    });
+    
+    // Skip if cart is empty
+    if (!cart.item_count || cart.item_count === 0) {
+      console.log('[MUP Override] Cart is empty, skipping');
+      return;
+    }
+    
+    // Check if there's already an override attribute set
+    const hasOverrideAttr = cart.attributes && cart.attributes.mup_override === 'true';
+    
+    // Get applied discount codes (if any)
+    const appliedCodes = [];
+    
+    // Log cart structure for debugging
+    console.log('[MUP Override] Cart structure:', {
+      hasDiscount: !!cart.discount,
+      hasCartLevelDiscounts: !!cart.cart_level_discount_applications,
+      discountApplications: cart.cart_level_discount_applications,
+      attributes: cart.attributes,
+      totalDiscount: cart.total_discount
+    });
+    
+    // Check cart_level_discount_applications (most reliable in newer Shopify versions)
+    if (cart.cart_level_discount_applications && cart.cart_level_discount_applications.length > 0) {
+      cart.cart_level_discount_applications.forEach(discount => {
+        if (discount.title) {
+          appliedCodes.push(discount.title);
+          console.log('[MUP Override] Found discount from cart_level_discount_applications:', discount.title);
+        }
+      });
+    }
+    
+    // Check for discount in cart object (older format)
+    if (cart.discount) {
+      const code = cart.discount.code || cart.discount;
+      if (code) {
+        appliedCodes.push(code);
+        console.log('[MUP Override] Found discount from cart.discount:', code);
+      }
+    }
+    
+    // Also check URL params for discount code
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlDiscount = urlParams.get('discount');
+    if (urlDiscount) {
+      appliedCodes.push(urlDiscount);
+      console.log('[MUP Override] Found discount from URL:', urlDiscount);
+    }
+    
+    // Check cart attributes for stored discount codes
+    if (cart.attributes && cart.attributes.discount_code) {
+      appliedCodes.push(cart.attributes.discount_code);
+      console.log('[MUP Override] Found discount from cart attributes:', cart.attributes.discount_code);
+    }
+
+    console.log('[MUP Override] All detected discount codes:', appliedCodes);
+
+      // If no codes applied and override attribute exists, remove it
+      if (appliedCodes.length === 0 && hasOverrideAttr) {
+        console.log('[MUP Override] No discount codes applied, removing override attribute');
+        await fetch('/cart/update.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            attributes: {
+              mup_override: '',
+              _mup_override_removed: new Date().toISOString()
+            }
+          })
+        });
+        return;
+      }
+
+      // If no codes applied, nothing to do
+      if (appliedCodes.length === 0) {
+        return;
+      }
+
+      // Fetch override codes from shop metafield
+      // Since we can't easily access metafields from frontend, we'll hardcode for now
+      // TODO: Expose override codes via a /apps/mup/override-codes endpoint
+      const overrideCodes = await fetchOverrideCodes();
+      
+      console.log('[MUP Override] Configured override codes:', overrideCodes);
+
+    // Check if any applied code is an override code
+    const hasOverrideCode = appliedCodes.some(code => {
+      const normalizedCode = code.toUpperCase().trim();
+      return overrideCodes.includes(normalizedCode);
+    });
+
+    console.log('[MUP Override] Has override code:', hasOverrideCode);
+
+    // Set or remove the override attribute based on whether we detected an override code
+    if (hasOverrideCode && !hasOverrideAttr) {
+      console.log('[MUP Override] Setting override attribute');
+      await fetch('/cart/update.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attributes: {
+            mup_override: 'true',
+            _mup_override_set: new Date().toISOString()
+          }
+        })
+      });
+      
+      // If on checkout page, clear stale errors by returning to cart
+      if (window.location.pathname.includes('/checkout') || window.location.pathname.includes('/checkouts')) {
+        console.log('[MUP Override] On checkout page - redirecting to cart to clear stale errors');
+        showOverrideMessage('Override code detected! Returning to cart...');
+        setTimeout(() => {
+          window.location.href = '/cart';
+        }, 1500);
+        return;
+      }
+      
+      // Show a message to the user
+      showOverrideMessage('✓ MUP enforcement bypassed - override code detected');
+    } else if (!hasOverrideCode && hasOverrideAttr) {
+      console.log('[MUP Override] Removing override attribute (code no longer qualifies)');
+      await fetch('/cart/update.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attributes: {
+            mup_override: '',
+            _mup_override_removed: new Date().toISOString()
+          }
+        })
+      });
+    }
+
+    } catch (error) {
+      console.error('[MUP Override] Error checking for override discount:', error);
+    }
+  }
+
+// Fetch override codes from backend or use hardcoded list
+async function fetchOverrideCodes() {
+  try {
+    // Attempt to fetch from the Gadget app endpoint
+    const response = await fetch('/apps/mup/override-codes.json');
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.codes && data.codes.length > 0) {
+        console.log('[MUP Override] Fetched override codes from backend:', data.codes);
+        return data.codes;
+      }
+    }
+  } catch (error) {
+    console.log('[MUP Override] Could not fetch override codes from endpoint, using defaults:', error);
+  }
+
+  // Fallback to hardcoded list
+  // IMPORTANT: Update this list to match your configured override codes
+  console.log('[MUP Override] Using hardcoded fallback list');
+  return [
+    'CS100',
+    'STAFF40',
+    'STAFF50',
+    'INTERNAL',
+    'OVERRIDE'
+  ];
+}
+
+  // Show a message to the user
+  function showOverrideMessage(message) {
+    // Create a simple notification banner
+    const banner = document.createElement('div');
+    banner.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 16px 24px;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 9999;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+    `;
+    banner.textContent = message;
+    document.body.appendChild(banner);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      banner.style.transition = 'opacity 0.3s';
+      banner.style.opacity = '0';
+      setTimeout(() => banner.remove(), 300);
+    }, 3000);
+  }
+
+  // Intercept checkout button clicks to ensure override attribute is set
+  function interceptCheckoutButtons() {
+    console.log('[MUP Override] Setting up checkout button interceptors');
+    
+    // Common checkout button selectors
+    const checkoutSelectors = [
+      'button[name="checkout"]',
+      'input[name="checkout"]',
+      '[href*="/checkouts"]',
+      '.cart__checkout-button',
+      '[data-testid="Checkout-button"]',
+      'button[type="submit"][name="checkout"]',
+      'a[href="/checkout"]'
+    ];
+    
+    checkoutSelectors.forEach(selector => {
+      document.querySelectorAll(selector).forEach(button => {
+        button.addEventListener('click', async (e) => {
+          console.log('[MUP Override] Checkout button clicked - ensuring override attribute is set');
+          
+          // Run override detection synchronously before checkout
+          try {
+            await checkForOverrideDiscount();
+            console.log('[MUP Override] Override check complete, allowing checkout');
+          } catch (error) {
+            console.error('[MUP Override] Error during pre-checkout override check:', error);
+          }
+        }, true); // Use capture phase
+      });
+    });
+  }
+
+  // Run override check on ALL pages (cart, product, checkout, etc.)
+  // This ensures the mup_override attribute is set before validation runs
+  function initOverrideDetection() {
+    console.log('[MUP Override] Initializing override detection on:', window.location.pathname);
+    
+    // Run immediately
+    checkForOverrideDiscount();
+    
+    // Check multiple times with delays to catch async discount applications
+    setTimeout(checkForOverrideDiscount, 300);
+    setTimeout(checkForOverrideDiscount, 800);
+    setTimeout(checkForOverrideDiscount, 1500);
+    setTimeout(checkForOverrideDiscount, 3000);
+    
+    // Set up checkout button interceptors
+    setTimeout(interceptCheckoutButtons, 500);
+    setTimeout(interceptCheckoutButtons, 2000); // Again after potential dynamic content loads
+    
+    // Also listen for cart updates
+    document.addEventListener('cart:updated', () => {
+      checkForOverrideDiscount();
+      // Re-setup interceptors after cart updates
+      setTimeout(interceptCheckoutButtons, 100);
+    });
+    
+    // Listen for page focus (user coming back to tab)
+    window.addEventListener('focus', checkForOverrideDiscount);
+    
+    // Listen for DOM mutations to catch dynamically added checkout buttons
+    const observer = new MutationObserver(() => {
+      interceptCheckoutButtons();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOverrideDetection);
+  } else {
+    initOverrideDetection();
+  }
+
 })();
 
