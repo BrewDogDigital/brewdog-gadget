@@ -1,0 +1,14 @@
+{
+  "name": "UK Region Selector",
+  "label_text": "Your Region:",
+  "modal_title": "Select Your Region",
+  "modal_description": "Please select your region for accurate pricing and compliance information.",
+  "modal_button_text": "Confirm Selection",
+  "mup_notice_text": "Note: Discount codes that reduce prices below the minimum unit price will be blocked at checkout for Scotland customers.",
+  "england": "England",
+  "scotland": "Scotland",
+  "wales": "Wales",
+  "northern_ireland": "Northern Ireland",
+  "choose_region": "Choose a region..."
+}
+

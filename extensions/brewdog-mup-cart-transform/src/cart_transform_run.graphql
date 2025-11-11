@@ -1,0 +1,52 @@
+query CartTransformRunInput {
+  cart {
+    attribute(key: "uk_region") {
+      value
+    }
+    lines {
+      id
+      quantity
+      attribute(key: "mup") {
+        value
+      }
+      originalPriceAttribute: attribute(key: "original_price") {
+        value
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          product {
+            id
+          }
+          metafield(namespace: "custom", key: "total_units") {
+            value
+            type
+          }
+        }
+      }
+      cost { 
+        amountPerQuantity { amount currencyCode }
+        totalAmount { amount currencyCode }
+      }
+    }
+  }
+  shop {
+    levyProduct: metafield(namespace: "custom", key: "mup_levy_product") {
+      value
+      type
+    }
+    minimumUnitPrice: metafield(namespace: "custom", key: "minimum_unit_price") {
+      value
+      type
+    }
+    enforcementEnabled: metafield(namespace: "custom", key: "mup_enforcement_enabled") {
+      value
+      type
+    }
+    debugFlag: metafield(namespace: "custom", key: "mup_debug") {
+      value
+      type
+    }
+  }
+}

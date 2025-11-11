@@ -1,0 +1,861 @@
+{% comment %}
+  UK Region Selector - App Embed
+  Auto-injects globally in the body
+{% endcomment %}
+
+<!-- REGION SELECTOR LOADED -->
+
+{% comment %} Fetch MUP settings from app metafields {% endcomment %}
+{% assign geoip_enabled = false %}
+{% assign maxmind_account_id = "" %}
+{% assign maxmind_license_key = "" %}
+
+{% if shop.metafields.custom.mup_geoip_enabled %}
+  {% assign geoip_enabled = true %}
+  {% assign maxmind_account_id = shop.metafields.custom.mup_maxmind_account_id %}
+  {% assign maxmind_license_key = shop.metafields.custom.mup_maxmind_license_key %}
+{% endif %}
+
+<!-- Flag Icons CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" />
+
+<!-- MaxMind GeoIP2 JavaScript -->
+<script src="//geoip-js.com/js/apis/geoip2/v2.1/geoip2.js" type="text/javascript"></script>
+
+<style>
+.uk-region-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.uk-region-selector__wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Custom Select Styles */
+.uk-region-custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.uk-region-custom-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  gap: 15px;
+  transition: border-color 0.2s;
+  margin-right: 16px;
+  margin-left: 16px;
+}
+
+.uk-region-custom-select__trigger:hover {
+  border-color: #9ca3af;
+}
+
+.uk-region-custom-select.is-open .uk-region-custom-select__trigger {
+  border-color: #000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.uk-region-custom-select__value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.uk-region-custom-select__value .fi {
+  font-size: 1.25em;
+}
+
+.uk-region-custom-select__placeholder {
+  color: #9ca3af;
+}
+
+.uk-region-custom-select__arrow {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.uk-region-custom-select.is-open .uk-region-custom-select__arrow {
+  transform: rotate(180deg);
+}
+
+.uk-region-custom-select__dropdown {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 100;
+  max-height: 250px;
+  overflow-y: auto;
+  display: none;
+}
+
+.uk-region-custom-select.is-open .uk-region-custom-select__dropdown {
+  display: block;
+}
+
+.uk-region-custom-select__option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  font-size: 1rem;
+}
+
+.uk-region-custom-select__option:hover {
+  background-color: #f3f4f6;
+}
+
+.uk-region-custom-select__option.is-selected {
+  background-color: #e5e7eb;
+  font-weight: 600;
+}
+
+.uk-region-custom-select__option .fi {
+  font-size: 1.5em;
+  flex-shrink: 0;
+}
+.uk-region-selector__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text, #000);
+}
+.uk-region-selector__select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-text, #000);
+  background-color: var(--color-background, #fff);
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 0.375rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  cursor: pointer;
+}
+.uk-region-selector__select:hover {
+  border-color: var(--color-border-hover, #9ca3af);
+}
+.uk-region-selector__select:focus {
+  outline: none;
+  border-color: var(--color-primary, #000);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+.uk-region-selector__wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.uk-region-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.uk-region-modal__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+}
+.uk-region-modal__content {
+  position: relative;
+  background-color: #fff;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  z-index: 10000;
+  animation: modalFadeIn 0.3s ease-out;
+}
+.uk-region-modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  transition: opacity 0.2s;
+}
+.uk-region-modal__close:hover {
+  opacity: 0.7;
+}
+.uk-region-modal__close svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.uk-region-modal__header {
+  margin-bottom: 1.5rem;
+  padding-right: 2rem;
+}
+.uk-region-modal__title {
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #000;
+}
+.uk-region-modal__description {
+  color: #6b7280;
+  line-height: 1.6;
+}
+.uk-region-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.uk-region-modal__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000;
+}
+.uk-region-modal__select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #000;
+  background-color: #fff;
+  border: 2px solid #d1d5db;
+  border-radius: 0.375rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  cursor: pointer;
+}
+.uk-region-modal__select:hover {
+  border-color: #9ca3af;
+}
+.uk-region-modal__select:focus {
+  outline: none;
+  border-color: #000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+.uk-region-modal__submit {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.uk-region-modal__submit:hover {
+  opacity: 0.9;
+}
+.uk-region-modal__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
+
+<div 
+  id="uk-region-selector-global"
+  class="uk-region-selector-app-embed uk-region-selector--global"
+  style="display: none;"
+  data-geoip-enabled="{{ shop.metafields.custom.mup_geoip_enabled }}"
+  data-maxmind-account-id="{{ maxmind_account_id }}"
+  data-maxmind-license-key="{{ maxmind_license_key }}"
+>
+  <div class="uk-region-selector__wrapper">
+    <div class="uk-region-custom-select" id="uk-region-custom-select">
+      <div class="uk-region-custom-select__trigger" data-select-trigger>
+        <span class="uk-region-custom-select__value" data-select-value>
+          <span class="uk-region-custom-select__placeholder">{{ app.settings.placeholder_text | default: "Select Region" }}</span>
+        </span>
+        <svg class="uk-region-custom-select__arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
+          <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      
+      <div class="uk-region-custom-select__dropdown" data-select-dropdown>
+        <button type="button" class="uk-region-custom-select__option" data-value="england">
+          <span class="fi fi-gb-eng"></span>
+          <span>England</span>
+        </button>
+        <button type="button" class="uk-region-custom-select__option" data-value="scotland">
+          <span class="fi fi-gb-sct"></span>
+          <span>Scotland</span>
+        </button>
+        <button type="button" class="uk-region-custom-select__option" data-value="wales">
+          <span class="fi fi-gb-wls"></span>
+          <span>Wales</span>
+        </button>
+        <button type="button" class="uk-region-custom-select__option" data-value="northern_ireland">
+          <span class="fi fi-gb-nir"></span>
+          <span>Northern Ireland</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Hidden input for compatibility with existing JS -->
+    <input type="hidden" id="uk-region-select-global" data-region-select value="">
+  </div>
+</div>
+
+<!-- Modal markup -->
+<div 
+  id="uk-region-modal-global"
+  class="uk-region-modal"
+  style="display: none;"
+  role="dialog"
+  aria-labelledby="uk-region-modal-title-global"
+  aria-modal="true"
+>
+  <div class="uk-region-modal__overlay" data-modal-close></div>
+  
+  <div class="uk-region-modal__content">
+    <button 
+      class="uk-region-modal__close"
+      aria-label="Close"
+      data-modal-close
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    
+    <div class="uk-region-modal__header">
+      <h2 id="uk-region-modal-title-global" class="uk-region-modal__title">
+        Select Your Region
+      </h2>
+      <p class="uk-region-modal__description">
+        Please select your region for accurate pricing and compliance information.
+      </p>
+    </div>
+    
+    <div class="uk-region-modal__body">
+      <label for="uk-region-modal-select-global" class="uk-region-modal__label">
+        Your Region:
+      </label>
+      
+      <select
+        id="uk-region-modal-select-global"
+        class="uk-region-modal__select"
+        data-modal-select
+      >
+        <option value="">Choose a region...</option>
+        <option value="england">England</option>  
+        <option value="scotland">Scotland</option>
+        <option value="wales">Wales</option>
+        <option value="northern_ireland">Northern Ireland</option>
+      </select>
+      
+      <button 
+        class="uk-region-modal__submit"
+        data-modal-submit
+        disabled
+      >
+        Confirm Selection
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const COOKIE_NAME = "mup_region";
+  const COOKIE_EXPIRY_DAYS = 180;
+
+  // Read MaxMind config from container data attributes
+  function getGeoipEnabled() {
+    const container = document.getElementById('uk-region-selector-global');
+    if (!container) {
+      console.log('[Region Selector] Container not found yet');
+      return false;
+    }
+    
+    const geoipEnabled = container.dataset.geoipEnabled === 'true';
+    console.log('[Region Selector] GeoIP enabled:', geoipEnabled);
+    return geoipEnabled;
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      return parts.pop().split(';').shift();
+    }
+    return null;
+  }
+
+  function setCookie(name, value, days) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = `expires=${date.toUTCString()}`;
+    document.cookie = `${name}=${value};${expires};path=/`;
+  }
+
+  async function setCartAttribute(region) {
+    try {
+      const response = await fetch('/cart/update.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attributes: {
+            uk_region: region,
+            _uk_region_updated: new Date().toISOString()
+          }
+        })
+      });
+      if (response.ok) {
+        console.log('[Region Selector] Cart attribute updated:', region);
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('[Region Selector] Failed to update cart:', error);
+    }
+  }
+
+  async function triggerCartTransform() {
+    try {
+      // Get current cart to trigger transform
+      const cartResponse = await fetch('/cart.js');
+      const cart = await cartResponse.json();
+      
+      if (cart.items && cart.items.length > 0) {
+        // Update first item quantity to same value to trigger cart transform
+        const firstItem = cart.items[0];
+        await fetch('/cart/change.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: firstItem.key,
+            quantity: firstItem.quantity
+          })
+        });
+        console.log('[Region Selector] Cart transform triggered');
+      }
+    } catch (error) {
+      console.error('[Region Selector] Failed to trigger cart transform:', error);
+    }
+  }
+
+  // Auto-detect UK region using MaxMind GeoIP
+  async function autoDetectRegion() {
+    const container = document.getElementById('uk-region-selector-global');
+    if (!container) {
+      console.log('[Region Selector] Container not found in autoDetectRegion');
+    }
+
+    const accountId = container.dataset.maxmindAccountId;
+    const licenseKey = container.dataset.maxmindLicenseKey;
+
+
+    console.log('[Region Selector] Calling MaxMind GeoIP...');
+    
+    return new Promise((resolve) => {
+      geoip2.city(
+        function(response) {
+          console.log('[Region Selector] GeoIP response:', response);
+          
+          // Check if in UK
+          if (response.country.iso_code !== 'GB') {
+            console.log('[Region Selector] Not in UK, defaulting to England');
+            resolve({ detected: true, region: 'england' });
+            return;
+          }
+
+          // Map MaxMind subdivision codes to our regions
+          const subdivisions = response.subdivisions || [];
+          let detectedRegion = 'england'; // Default to England
+          
+          for (const subdivision of subdivisions) {
+            const code = subdivision.iso_code;
+            if (code === 'SCT') {
+              detectedRegion = 'scotland';
+              break;
+            } else if (code === 'WLS') {
+              detectedRegion = 'wales';
+              break;
+            } else if (code === 'NIR') {
+              detectedRegion = 'northern_ireland';
+              break;
+            } else if (code === 'ENG') {
+              detectedRegion = 'england';
+              break;
+            }
+          }
+          
+          console.log('[Region Selector] Detected region:', detectedRegion);
+          resolve({ detected: true, region: detectedRegion });
+        },
+        function(error) {
+          console.error('[Region Selector] MaxMind error:', error);
+          console.log('[Region Selector] Defaulting to England due to error');
+          resolve({ detected: true, region: 'england' });
+        },
+        { w3c_geolocation: false }
+      );
+    });
+  }
+
+  async function init() {
+    console.log('[Region Selector] Initializing...');
+    
+    const container = document.getElementById('uk-region-selector-global');
+    const modal = document.getElementById('uk-region-modal-global');
+    
+    console.log('[Region Selector] Container:', container);
+    console.log('[Region Selector] Modal:', modal);
+    
+    if (!container || !modal) {
+      console.error('[Region Selector] Container or modal not found!');
+      return;
+    }
+
+    const modalSelect = modal.querySelector('[data-modal-select]');
+    const modalSubmit = modal.querySelector('[data-modal-submit]');
+    const modalCloseButtons = modal.querySelectorAll('[data-modal-close]');
+    
+    // Region data with labels and flags
+    const regionData = {
+      'england': { label: 'England', flag: 'fi-gb-eng' },
+      'scotland': { label: 'Scotland', flag: 'fi-gb-sct' },
+      'wales': { label: 'Wales', flag: 'fi-gb-wls' },
+      'northern_ireland': { label: 'Northern Ireland', flag: 'fi-gb-nir' }
+    };
+    
+    // Custom select elements (will be initialized after injection)
+    let select, customSelect, trigger, valueDisplay, dropdown, options;
+    
+    // Function to update custom select display
+    function updateCustomSelectDisplay(region) {
+      if (!valueDisplay) return;
+      
+      if (region && regionData[region]) {
+        const data = regionData[region];
+        valueDisplay.innerHTML = `
+          <span class="fi ${data.flag}"></span>
+          <span>${data.label}</span>
+        `;
+      } else {
+        valueDisplay.innerHTML = `<span class="uk-region-custom-select__placeholder">{{ app.settings.placeholder_text | default: "Select Region" }}</span>`;
+      }
+      
+      // Update selected state on options
+      options?.forEach(opt => {
+        if (opt.getAttribute('data-value') === region) {
+          opt.classList.add('is-selected');
+        } else {
+          opt.classList.remove('is-selected');
+        }
+      });
+    }
+    
+    // Function to setup custom select (called after injection)
+    function setupCustomSelect() {
+      console.log('[Region Selector] Setting up custom select...');
+      
+      select = container.querySelector('[data-region-select]');
+      customSelect = document.getElementById('uk-region-custom-select');
+      trigger = customSelect?.querySelector('[data-select-trigger]');
+      valueDisplay = customSelect?.querySelector('[data-select-value]');
+      dropdown = customSelect?.querySelector('[data-select-dropdown]');
+      options = customSelect?.querySelectorAll('[data-value]');
+      
+      console.log('[Region Selector] Custom select elements:', {
+        select: !!select,
+        customSelect: !!customSelect,
+        trigger: !!trigger,
+        valueDisplay: !!valueDisplay,
+        options: options?.length
+      });
+      
+      if (!trigger || !customSelect) {
+        console.error('[Region Selector] Custom select elements not found!');
+        return;
+      }
+      
+      // Toggle dropdown
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('[Region Selector] Trigger clicked');
+        customSelect.classList.toggle('is-open');
+      });
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (customSelect && !customSelect.contains(e.target)) {
+          customSelect.classList.remove('is-open');
+        }
+      });
+      
+      // Handle option selection
+      options?.forEach(option => {
+        option.addEventListener('click', async (e) => {
+          const region = option.getAttribute('data-value');
+          console.log('[Region Selector] Option clicked:', region);
+          
+          if (region && select) {
+            // Update hidden input
+            select.value = region;
+            
+            // Update display
+            updateCustomSelectDisplay(region);
+            
+            // Close dropdown
+            customSelect.classList.remove('is-open');
+            
+            // Trigger existing logic
+            setCookie(COOKIE_NAME, region, COOKIE_EXPIRY_DAYS);
+            await setCartAttribute(region);
+            
+            // Sync modal select
+            if (modalSelect) modalSelect.value = region;
+            
+            // Trigger advisory updates
+            window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
+            
+            // If changed to Scotland, trigger cart transform to add MUP
+            if (region === 'scotland') {
+              console.log('[Region Selector] Changed to Scotland - triggering MUP cart transform...');
+              await triggerCartTransform();
+              console.log('[Region Selector] Reloading page to show MUP...');
+              window.location.reload();
+            }
+          }
+        });
+      });
+    }
+
+    // Auto-inject selector into specified element
+    const autoInjectSelector = "{{ block.settings.auto_inject_selector }}";
+    const injectPosition = "{{ block.settings.inject_position | default: 'prepend' }}";
+    
+    if (autoInjectSelector) {
+      console.log('[Region Selector] Auto-inject selector:', autoInjectSelector);
+      console.log('[Region Selector] Inject position:', injectPosition);
+      
+      const targetElement = document.querySelector(autoInjectSelector);
+      if (targetElement) {
+        console.log('[Region Selector] Target element found, injecting...');
+        
+        // Remove from current position
+        container.remove();
+        
+        // Inject at specified position
+        if (injectPosition === 'prepend') {
+          targetElement.prepend(container);
+        } else {
+          targetElement.append(container);
+        }
+        
+        console.log('[Region Selector] Injected into:', autoInjectSelector);
+      } else {
+        console.warn('[Region Selector] Target element not found:', autoInjectSelector);
+      }
+    }
+
+    // Show selector
+    container.style.display = 'flex';
+    console.log('[Region Selector] Container displayed');
+    
+    // Setup custom select AFTER injection
+    setupCustomSelect();
+
+    // Load saved region
+    const savedRegion = getCookie(COOKIE_NAME);
+    console.log('[Region Selector] Saved region:', savedRegion);
+    
+    if (savedRegion) {
+      // Already have a saved region, just restore it
+      if (select) select.value = savedRegion;
+      updateCustomSelectDisplay(savedRegion);
+      console.log('[Region Selector] Region loaded from cookie:', savedRegion);
+    } else {
+      // No saved region
+      // Check GeoIP enabled AFTER container is injected
+      const geoipEnabled = getGeoipEnabled();
+      console.log('[Region Selector] GeoIP Enabled:', geoipEnabled);
+      
+      if (geoipEnabled) {
+        // MaxMind is enabled - auto-detect region
+        console.log('[Region Selector] MaxMind enabled, attempting auto-detection...');
+        const autoDetect = await autoDetectRegion();
+        
+        if (autoDetect.region) {
+          console.log('[Region Selector] Auto-detected region:', autoDetect.region);
+          
+          // Set the region
+          const region = autoDetect.region;
+          if (select) select.value = region;
+          updateCustomSelectDisplay(region);
+          
+          // Save it
+          setCookie(COOKIE_NAME, region, COOKIE_EXPIRY_DAYS);
+          await setCartAttribute(region);
+          
+          // Trigger advisory updates
+          window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
+          
+          // If Scotland, trigger cart transform
+          if (region === 'scotland') {
+            console.log('[Region Selector] Auto-detected Scotland - triggering MUP cart transform...');
+            await triggerCartTransform();
+          }
+        }
+      } else {
+        // MaxMind is disabled - show modal for manual selection
+        console.log('[Region Selector] MaxMind disabled, showing modal for manual selection...');
+        setTimeout(() => {
+          modal.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+          console.log('[Region Selector] Modal displayed');
+        }, 500);
+      }
+    }
+
+  // Note: Custom select option clicks are handled above
+  // Hidden input doesn't need change listener since we handle it in option clicks
+
+  // Handle modal select change
+  if (modalSelect) {
+    modalSelect.addEventListener('change', (e) => {
+      const selected = e.target.value;
+      if (modalSubmit) {
+        modalSubmit.disabled = !selected;
+      }
+    });
+  }
+
+  // Handle modal submit
+  if (modalSubmit) {
+    modalSubmit.addEventListener('click', async () => {
+      const region = modalSelect?.value;
+      if (region) {
+        setCookie(COOKIE_NAME, region, COOKIE_EXPIRY_DAYS);
+        await setCartAttribute(region);
+        
+        // Update custom selector display
+        if (select) select.value = region;
+        updateCustomSelectDisplay(region);
+        
+        // Close modal
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        
+        // Trigger advisory updates
+        window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
+        
+        // If changed to Scotland, trigger cart transform to add MUP
+        if (region === 'scotland') {
+          console.log('[Region Selector] Changed to Scotland - triggering MUP cart transform...');
+          await triggerCartTransform();
+          console.log('[Region Selector] Reloading page to show MUP...');
+          window.location.reload();
+        }
+      }
+    });
+  }
+
+    // Handle modal close
+    modalCloseButtons?.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      });
+    });
+  }
+
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Global Region Selector",
+  "target": "body",
+  "settings": [
+    {
+      "type": "text",
+      "id": "auto_inject_selector",
+      "label": "Auto-inject CSS Selector",
+      "info": "e.g., .header__top, #site-header, .utility-bar - Where to inject the region selector",
+      "default": "header"
+    },
+    {
+      "type": "select",
+      "id": "inject_position",
+      "label": "Injection Position",
+      "options": [
+        {
+          "value": "prepend",
+          "label": "Beginning of element"
+        },
+        {
+          "value": "append",
+          "label": "End of element"
+        }
+      ],
+      "default": "prepend"
+    },
+    {
+      "type": "text",
+      "id": "label_text",
+      "label": "Label Text",
+      "default": "Your Region:"
+    },
+    {
+      "type": "text",
+      "id": "placeholder_text",
+      "label": "Placeholder Text",
+      "default": "Select Region"
+    }
+  ]
+}
+{% endschema %}

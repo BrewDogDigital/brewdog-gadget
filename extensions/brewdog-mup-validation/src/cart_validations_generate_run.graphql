@@ -1,0 +1,49 @@
+query CartValidationsGenerateRunInput {
+  cart {
+    attribute(key: "uk_region") {
+      value
+    }
+    overrideAttribute: attribute(key: "mup_override") {
+      value
+    }
+    discountCodeAttribute: attribute(key: "discount_code") {
+      value
+    }
+    deliveryGroups {
+      deliveryAddress {
+        zip
+      }
+    }
+    lines {
+      id
+      quantity
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          metafield(namespace: "custom", key: "total_units") {
+            value
+          }
+        }
+      }
+      cost {
+        totalAmount {
+          amount
+        }
+        amountPerQuantity {
+          amount
+        }
+      }
+    }
+  }
+  shop {
+    minimumUnitPrice: metafield(namespace: "custom", key: "minimum_unit_price") {
+      value
+    }
+    enforcementEnabled: metafield(namespace: "custom", key: "mup_enforcement_enabled") {
+      value
+    }
+  }
+}
+
+

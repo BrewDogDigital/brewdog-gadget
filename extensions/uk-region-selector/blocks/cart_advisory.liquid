@@ -1,0 +1,245 @@
+{% comment %}
+  Scotland Advisory - Cart Page Block
+  Shows MUP advisory message with levy estimate for Scotland customers
+{% endcomment %}
+
+<style>
+.scotland-advisory {
+  padding: 1rem;
+  margin: 1rem 0;
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.375rem;
+  display: flex;
+  gap: 0.75rem;
+}
+.scotland-advisory__icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+.scotland-advisory__content {
+  flex: 1;
+}
+.scotland-advisory__title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #92400e;
+  margin-bottom: 0.5rem;
+}
+.scotland-advisory__text {
+  font-size: 0.875rem;
+  color: #78350f;
+  line-height: 1.5;
+}
+.scotland-advisory__levy-estimate {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f59e0b;
+  font-size: 0.875rem;
+  color: #78350f;
+}
+.scotland-advisory__levy-estimate strong {
+  font-weight: 600;
+}
+.scotland-advisory__levy-amount {
+  margin-bottom: 0.5rem;
+}
+.main-cart .scotland-advisory {
+  margin-top: 1rem;
+}
+</style>
+
+<div 
+  class="scotland-advisory scotland-advisory--cart" 
+  data-scotland-advisory="cart-{{ block.id }}"
+  style="display: none;"
+>
+  <div class="scotland-advisory__icon">{{ block.settings.icon | default: "⚠️" }}</div>
+  <div class="scotland-advisory__content">
+    <div class="scotland-advisory__title">
+      {{ block.settings.title | default: "Minimum Unit Pricing Applies" }}
+    </div>
+    
+    <div class="scotland-advisory__text">
+      {{ block.settings.message | default: "Scotland customers: MUP levy charges may be added at checkout if discounts reduce prices below the legal minimum (£0.65 per unit)." }}
+    </div>
+      
+      <div class="scotland-advisory__levy-estimate" id="scotlandLevyEstimate">
+        <!-- Debug: Cart items count = {{ cart.items.size }} -->
+        {%- liquid
+          assign minimum_unit_price = 0.65
+          assign total_levy_estimate = 0
+          
+          for item in cart.items
+            assign is_mup_levy = item.properties.mup
+            if is_mup_levy == 'true'
+              continue
+            endif
+            
+            assign units_per_item = item.variant.metafields.custom.total_units
+            if units_per_item
+              assign item_minimum_price = units_per_item | times: minimum_unit_price | times: 100
+              assign item_levy = item_minimum_price | minus: item.variant.price | times: item.quantity
+              
+              if item_levy > 0
+                assign total_levy_estimate = total_levy_estimate | plus: item_levy
+              endif
+            endif
+          endfor
+        -%}
+        
+        <!-- Debug: Total levy estimate = {{ total_levy_estimate }} -->
+        {{ }}
+        {% for item in cart.items %}
+          {% assign units = item.variant.metafields.custom.total_units %}
+          {% if units %}
+            {% assign min_price = units | times: 0.65 | times: 100 %}
+            {% assign levy_needed = min_price | minus: item.variant.price %}
+            <!-- Debug Item: {{ item.title }} -->
+            <!-- Units: {{ units }} | Min Required: {{ min_price }} (£{{ units | times: 0.65 }}) -->
+            <!-- Variant Price (base): {{ item.variant.price }} (£{{ item.variant.price | divided_by: 100.0 }}) -->
+            <!-- Original Price (after transform): {{ item.original_price }} (£{{ item.original_price | divided_by: 100.0 }}) -->
+            <!-- Levy Needed: {{ levy_needed }} (£{{ levy_needed | divided_by: 100.0 }}) -->
+            <!-- Final Price: {{ item.final_price }} | Qty: {{ item.quantity }} -->
+          {% endif %}
+        {% endfor %}
+        
+        {% if total_levy_estimate > 0 %}
+          <div class="scotland-advisory__levy-amount">
+            <strong>{{ block.settings.levy_label | default: "Provisional Levy:" }}</strong> 
+            {{ total_levy_estimate | money }}
+          </div>
+          <small>{{ block.settings.levy_note | default: "Final levy calculated at checkout" }}</small>
+        {% else %}
+          <div style="padding: 0.5rem; background: #ffe; border: 1px solid #ffb; border-radius: 4px; font-size: 0.75rem;">
+            <strong>Debug:</strong> No levy required - prices are at or above minimum.<br>
+            <small>Levy only applies when discounted price drops below £{{ minimum_unit_price }} per unit.</small>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      console.log('[Cart Advisory] Initializing...');
+      
+      const autoInjectSelector = {{ block.settings.auto_inject_selector | json }};
+      const advisory = document.querySelector('[data-scotland-advisory="cart-{{ block.id }}"]');
+      
+      console.log('[Cart Advisory] Auto-inject selector:', autoInjectSelector);
+      console.log('[Cart Advisory] Advisory element:', advisory);
+      
+      // Auto-inject if selector is provided
+      if (autoInjectSelector && autoInjectSelector.trim() !== '') {
+        const targetElement = document.querySelector(autoInjectSelector);
+        console.log('[Cart Advisory] Target element:', targetElement);
+        
+        if (targetElement && advisory) {
+          // Clone the advisory and inject it
+          const clonedAdvisory = advisory.cloneNode(true);
+          clonedAdvisory.setAttribute('data-scotland-advisory', 'cart-{{ block.id }}-injected');
+          targetElement.insertAdjacentElement('afterend', clonedAdvisory);
+          
+          // Hide the original block
+          advisory.style.display = 'none';
+          
+          console.log('[Cart Advisory] Injected after target element');
+          
+          // Check region and show if Scotland
+          checkRegionAndShow('cart-{{ block.id }}-injected');
+        } else {
+          console.warn('[Cart Advisory] Auto-inject target not found:', autoInjectSelector);
+        }
+      } else {
+        console.log('[Cart Advisory] No auto-inject, showing in block position');
+        // No auto-inject, show in block position
+        checkRegionAndShow('cart-{{ block.id }}');
+      }
+      
+      function checkRegionAndShow(advisoryId) {
+        const uwpCart = document.querySelector('uwp-cart');
+        let region;
+        
+        if (uwpCart) {
+          const cartData = JSON.parse(uwpCart.getAttribute('cart-data'));
+          region = cartData.attributes?.uk_region;
+          updateAdvisory(region, advisoryId);
+        } else {
+          fetch('/cart.js')
+            .then(response => response.json())
+            .then(cart => {
+              region = cart.attributes?.uk_region;
+              updateAdvisory(region, advisoryId);
+            })
+            .catch(error => console.error('Error checking region:', error));
+        }
+        
+        if (region) {
+          updateAdvisory(region, advisoryId);
+        }
+      }
+      
+      function updateAdvisory(region, advisoryId) {
+        const advisoryElement = document.querySelector('[data-scotland-advisory="' + advisoryId + '"]');
+        console.log('[Cart Advisory] Region:', region);
+        console.log('[Cart Advisory] Advisory ID:', advisoryId);
+        console.log('[Cart Advisory] Advisory element found:', !!advisoryElement);
+        
+        if (region === 'scotland' && advisoryElement) {
+          advisoryElement.style.display = 'flex';
+          console.log('[Cart Advisory] Showing advisory for Scotland');
+        } else if (advisoryElement) {
+          advisoryElement.style.display = 'none';
+          console.log('[Cart Advisory] Hiding advisory (not Scotland)');
+        } else {
+          console.error('[Cart Advisory] Advisory element not found!');
+        }
+      }
+    })();
+  </script>
+
+{% schema %}
+{
+  "name": "Cart Advisory",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "auto_inject_selector",
+      "label": "Auto-inject CSS Selector (optional)",
+      "info": "e.g., .cart-summary, #cart-totals - Leave blank to disable auto-injection"
+    },
+    {
+      "type": "text",
+      "id": "icon",
+      "label": "Icon",
+      "default": "⚠️"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Minimum Unit Pricing Applies"
+    },
+    {
+      "type": "textarea",
+      "id": "message",
+      "label": "Message",
+      "default": "Scotland customers: MUP levy charges may be added at checkout if discounts reduce prices below the legal minimum (£0.65 per unit)."
+    },
+    {
+      "type": "text",
+      "id": "levy_label",
+      "label": "Levy Label",
+      "default": "Provisional Levy:"
+    },
+    {
+      "type": "text",
+      "id": "levy_note",
+      "label": "Levy Note",
+      "default": "Final levy calculated at checkout"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,207 @@
+{% comment %}
+  Scotland Advisory - Product Pages Block
+  Shows MUP advisory message for Scotland customers on product pages
+{% endcomment %}
+
+{% comment %} Load MUP error handler script {% endcomment %}
+<script src="{{ 'mup-error-handler.js' | asset_url }}" defer></script>
+
+<style>
+.scotland-advisory {
+  padding: 1rem;
+  margin: 1rem 0;
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.375rem;
+  display: flex;
+  gap: 0.75rem;
+}
+.scotland-advisory__icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+.scotland-advisory__content {
+  flex: 1;
+}
+.scotland-advisory__title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #92400e;
+  margin-bottom: 0.5rem;
+}
+.scotland-advisory__text {
+  font-size: 0.875rem;
+  color: #78350f;
+  line-height: 1.5;
+}
+.product .scotland-advisory {
+  margin-top: 1.5rem;
+}
+</style>
+
+<div 
+  class="scotland-advisory scotland-advisory--product" 
+  data-scotland-advisory="product-{{ block.id }}"
+  style="display: none;"
+>
+  <div class="scotland-advisory__icon">{{ block.settings.icon | default: "ℹ️" }}</div>
+  <div class="scotland-advisory__content">
+    <div class="scotland-advisory__title">
+      {{ block.settings.title | default: "Scotland Customers" }}
+    </div>
+    
+    <div class="scotland-advisory__text">
+      {{ block.settings.message | default: "Minimum Unit Pricing (MUP) applies. A levy may be added at checkout if discounts reduce the price below the legal minimum (£0.65 per unit)." }}
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const autoInjectSelector = {{ block.settings.auto_inject_selector | json }};
+    const advisory = document.querySelector('[data-scotland-advisory="product-{{ block.id }}"]');
+    
+    // Auto-inject if selector is provided
+    if (autoInjectSelector && autoInjectSelector.trim() !== '') {
+      const targetElement = document.querySelector(autoInjectSelector);
+      if (targetElement && advisory) {
+        // Clone the advisory and inject it
+        const clonedAdvisory = advisory.cloneNode(true);
+        clonedAdvisory.setAttribute('data-scotland-advisory', 'product-{{ block.id }}-injected');
+        targetElement.insertAdjacentElement('afterend', clonedAdvisory);
+        
+        // Hide the original block
+        advisory.style.display = 'none';
+        
+        // Update reference to use the injected one
+        const injectedAdvisory = document.querySelector('[data-scotland-advisory="product-{{ block.id }}-injected"]');
+        
+        fetch('/cart.js')
+          .then(response => response.json())
+          .then(cart => {
+            const region = cart.attributes?.uk_region;
+            if (region === 'scotland' && injectedAdvisory) {
+              injectedAdvisory.style.display = 'flex';
+            }
+          })
+          .catch(error => console.error('Error checking region:', error));
+      } else {
+        console.warn('Auto-inject target not found:', autoInjectSelector);
+      }
+    } else {
+      // No auto-inject, show in block position
+      fetch('/cart.js')
+        .then(response => response.json())
+        .then(cart => {
+          const region = cart.attributes?.uk_region;
+          if (region === 'scotland' && advisory) {
+            advisory.style.display = 'flex';
+          }
+        })
+        .catch(error => console.error('Error checking region:', error));
+    }
+
+
+    // Function to show MUP violation error banner
+    async function showMupViolationBanner(errorDetails) {
+      // Remove any existing error banners
+      const existingBanners = document.querySelectorAll('.mup-violation-banner');
+      existingBanners.forEach(banner => banner.remove());
+
+      const banner = document.createElement('div');
+      banner.className = 'mup-violation-banner scotland-advisory';
+      banner.style.backgroundColor = '#fee2e2';
+      banner.style.border = '1px solid #dc2626';
+      banner.style.borderRadius = '0.375rem';
+      banner.style.padding = '1rem';
+      banner.style.margin = '1rem 0';
+      banner.style.display = 'flex';
+      banner.style.gap = '0.75rem';
+      
+      const errorMessage = errorDetails.message || 
+        'Your discount reduces the price below the legal minimum unit price for Scotland. Please remove your discount code to proceed with checkout.';
+      
+      const bannerContent = document.createElement('div');
+      bannerContent.style.display = 'flex';
+      bannerContent.style.gap = '0.75rem';
+      bannerContent.innerHTML = `
+        <div class="scotland-advisory__icon">⚠️</div>
+        <div class="scotland-advisory__content" style="flex: 1;">
+          <div class="scotland-advisory__title" style="color: #991b1b;">MUP Violation</div>
+          <div class="scotland-advisory__text" style="color: #7f1d1d;">${errorMessage}</div>
+        </div>
+      `;
+      banner.appendChild(bannerContent);
+
+      // Try to find product form, otherwise append to body or advisory container
+      const productForm = document.querySelector('.product-form') || 
+                         document.querySelector('form[action*="/cart/add"]') ||
+                         document.querySelector('[data-product-form]') ||
+                         advisory?.parentElement ||
+                         document.body;
+      
+      if (productForm) {
+        productForm.insertAdjacentElement('afterend', banner);
+      } else {
+        console.warn('[MUP Advisory] Could not find product form to inject error banner');
+      }
+
+      // Scroll to banner if possible
+      setTimeout(() => {
+        banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+
+    // Listen for MUP violation events (from mup-error-handler.js)
+    document.addEventListener('mup:violation-detected', (event) => {
+      const errorDetails = event.detail?.error || {};
+      console.log('[MUP Advisory] MUP violation detected:', errorDetails);
+      showMupViolationBanner(errorDetails);
+    });
+
+    // Also listen for product-add-to-cart-failed events (fallback)
+    document.addEventListener('product-add-to-cart-failed', (event) => {
+      const error = event.detail?.error || event.detail;
+      if (error && (
+        (typeof error === 'string' && error.toLowerCase().includes('minimum unit pricing')) ||
+        (error.message && error.message.toLowerCase().includes('minimum unit pricing'))
+      )) {
+        console.log('[MUP Advisory] MUP violation detected from product-add-to-cart-failed');
+        showMupViolationBanner({ message: error.message || error });
+      }
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Product Advisory",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "auto_inject_selector",
+      "label": "Auto-inject CSS Selector (optional)",
+      "info": "e.g., .product-form, #product-details - Leave blank to disable auto-injection"
+    },
+    {
+      "type": "text",
+      "id": "icon",
+      "label": "Icon",
+      "default": "ℹ️"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Scotland Customers"
+    },
+    {
+      "type": "textarea",
+      "id": "message",
+      "label": "Message",
+      "default": "Minimum Unit Pricing (MUP) applies. A levy may be added at checkout if discounts reduce the price below the legal minimum (£0.65 per unit)."
+    }
+  ]
+}
+{% endschema %}

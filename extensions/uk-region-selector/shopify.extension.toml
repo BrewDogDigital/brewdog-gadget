@@ -1,0 +1,115 @@
+api_version = "2025-01"
+
+[[extensions]]
+name = "UK Region Selector"
+handle = "uk-region-selector"
+uid = "16d21996-d8a7-024c-52f1-4104a8e4fa2d84bab174"
+type = "theme"
+
+[[extensions.settings.app_embed]]
+name = "Global Region Selector"
+type = "global_selector"
+
+  [[extensions.settings.app_embed.settings]]
+  id = "auto_inject_selector"
+  type = "text"
+  label = "Auto-inject CSS Selector"
+  info = "e.g., .header__top, #site-header, .utility-bar - Where to inject the region selector"
+  default = "header"
+
+  [[extensions.settings.app_embed.settings]]
+  id = "inject_position"
+  type = "select"
+  label = "Injection Position"
+  default = "prepend"
+  
+    [[extensions.settings.app_embed.settings.options]]
+    value = "prepend"
+    label = "Beginning of element"
+    
+    [[extensions.settings.app_embed.settings.options]]
+    value = "append"
+    label = "End of element"
+
+  [[extensions.settings.app_embed.settings]]
+  id = "label_text"
+  type = "text"
+  label = "Label Text"
+  default = "Your Region:"
+
+  [[extensions.settings.app_embed.settings]]
+  id = "placeholder_text"
+  type = "text"
+  label = "Placeholder Text"
+  default = "Select Region"
+
+[[extensions.settings.blocks]]
+name = "Product Advisory"
+type = "product_advisory"
+target = "section"
+
+  [[extensions.settings.blocks.settings]]
+  id = "auto_inject_selector"
+  type = "text"
+  label = "Auto-inject CSS Selector (optional)"
+  info = "e.g., .product-form, #product-details - Leave blank to disable auto-injection"
+
+  [[extensions.settings.blocks.settings]]
+  id = "icon"
+  type = "text"
+  label = "Icon"
+  default = "ℹ️"
+
+  [[extensions.settings.blocks.settings]]
+  id = "title"
+  type = "text"
+  label = "Title"
+  default = "Scotland Customers"
+
+  [[extensions.settings.blocks.settings]]
+  id = "message"
+  type = "textarea"
+  label = "Message"
+  default = "Minimum Unit Pricing (MUP) applies. A levy may be added at checkout if discounts reduce the price below the legal minimum (£0.65 per unit)."
+
+[[extensions.settings.blocks]]
+name = "Cart Advisory"
+type = "cart_advisory"
+target = "section"
+
+  [[extensions.settings.blocks.settings]]
+  id = "auto_inject_selector"
+  type = "text"
+  label = "Auto-inject CSS Selector (optional)"
+  info = "e.g., .cart-summary, #cart-totals - Leave blank to disable auto-injection"
+
+  [[extensions.settings.blocks.settings]]
+  id = "icon"
+  type = "text"
+  label = "Icon"
+  default = "⚠️"
+
+  [[extensions.settings.blocks.settings]]
+  id = "title"
+  type = "text"
+  label = "Title"
+  default = "Minimum Unit Pricing Applies"
+
+  [[extensions.settings.blocks.settings]]
+  id = "message"
+  type = "textarea"
+  label = "Message"
+  default = "Scotland customers: MUP levy charges may be added at checkout if discounts reduce prices below the legal minimum (£0.65 per unit)."
+
+  [[extensions.settings.blocks.settings]]
+  id = "levy_label"
+  type = "text"
+  label = "Levy Label"
+  default = "Provisional Levy:"
+
+  [[extensions.settings.blocks.settings]]
+  id = "levy_note"
+  type = "text"
+  label = "Levy Note"
+  default = "Final levy calculated at checkout"
+

@@ -1,0 +1,15 @@
+{
+  "title": "Minimum Unit Pricing Information",
+  "scotland_notice": "MUP applies to alcohol purchases in Scotland",
+  "levy_summary": "MUP Levy Summary",
+  "total_levy": "Total MUP Levy",
+  "validation_error_title": "Checkout Blocked - MUP Violation",
+  "validation_error_desc": "Your discount reduces the price below the legal minimum unit price for Scotland.",
+  "repair_title": "How to complete your purchase:",
+  "repair_step1": "Remove your discount code, or",
+  "repair_step2": "Increase quantity to meet minimum pricing",
+  "learn_more": "Learn more about Minimum Unit Pricing"
+}
+
+
+
