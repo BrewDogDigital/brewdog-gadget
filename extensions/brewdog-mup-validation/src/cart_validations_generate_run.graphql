@@ -6,6 +6,9 @@ query CartValidationsGenerateRunInput {
     overrideAttribute: attribute(key: "mup_override") {
       value
     }
+    discountCodeAttribute: attribute(key: "discount_code") {
+      value
+    }
     deliveryGroups {
       deliveryAddress {
         zip

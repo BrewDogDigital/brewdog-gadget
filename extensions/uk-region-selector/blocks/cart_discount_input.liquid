@@ -133,7 +133,6 @@
   border: 1px solid #6ee7b7;
   border-radius: 0.375rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
 }
 
@@ -154,21 +153,6 @@
   color: #047857;
 }
 
-.mup-discount-input__remove {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  color: #991b1b;
-  background-color: transparent;
-  border: 1px solid #fca5a5;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.mup-discount-input__remove:hover {
-  background-color: #fee2e2;
-}
-
 @media (max-width: 640px) {
   .mup-discount-input__form {
     flex-direction: column;
@@ -179,11 +163,6 @@
     width: 100%;
   }
   
-  .mup-discount-input__applied {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
 }
 </style>
 
@@ -223,13 +202,6 @@
       <div class="mup-discount-input__applied-code" id="mup-applied-code"></div>
       <div class="mup-discount-input__applied-savings" id="mup-applied-savings"></div>
     </div>
-    <button
-      type="button"
-      class="mup-discount-input__remove"
-      id="mup-discount-remove"
-    >
-      Remove
-    </button>
   </div>
 </div>
 
@@ -301,7 +273,6 @@
   const appliedEl = document.getElementById('mup-discount-applied');
   const appliedCodeEl = document.getElementById('mup-applied-code');
   const appliedSavingsEl = document.getElementById('mup-applied-savings');
-  const removeBtn = document.getElementById('mup-discount-remove');
 
   // Fetch override codes
   async function fetchOverrideCodes() {
@@ -440,44 +411,6 @@
     messageEl.style.display = 'none';
   }
 
-  // Remove discount
-  async function removeDiscount() {
-    try {
-      removeBtn.disabled = true;
-      removeBtn.textContent = 'Removing...';
-
-      // Clear cart attributes
-      await fetch('/cart/update.js', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          attributes: {
-            discount_code: '',
-            mup_override: '',
-            _discount_removed: new Date().toISOString()
-          }
-        })
-      });
-
-      // Clear discount using Shopify's native endpoint
-      await fetch('/discount/CLEAR', {
-        method: 'GET',
-        credentials: 'same-origin'
-      });
-      
-      // Small delay to let discount clear
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Reload the current page to show updated cart without discount
-      window.location.reload();
-
-    } catch (error) {
-      console.error('[MUP Discount] Error removing discount:', error);
-      showMessage('Failed to remove discount. Please try again.', 'error');
-      removeBtn.disabled = false;
-      removeBtn.textContent = 'Remove';
-    }
-  }
 
   // Check for existing discount on page load
   async function checkExistingDiscount() {
@@ -546,13 +479,6 @@
       e.preventDefault();
       const code = input.value.trim();
       applyDiscount(code);
-    });
-  }
-
-  // Remove button handler
-  if (removeBtn) {
-    removeBtn.addEventListener('click', () => {
-      removeDiscount();
     });
   }
 

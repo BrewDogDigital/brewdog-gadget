@@ -45,6 +45,7 @@ function isScottishPostcode(postcode: string | null | undefined): boolean {
 export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInput): CartValidationsGenerateRunResult {
   console.log("🔒 MUP Validation Function CALLED");
   console.log("📊 Cart lines count:", input.cart.lines.length);
+  console.log("📊 Full cart input:", JSON.stringify(input.cart, null, 2));
 
   const errors: ValidationError[] = [];
 
@@ -58,10 +59,12 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
   const overrideAttribute = (input.cart as any).overrideAttribute;
   const hasOverride = overrideAttribute?.value === 'true';
   
-  console.log("MUP Override attribute:", hasOverride);
+  console.log("🔍 MUP Override check:");
+  console.log("  - Override attribute object:", overrideAttribute);
+  console.log("  - Has override:", hasOverride);
   
   if (hasOverride) {
-    console.log("MUP enforcement BYPASSED due to override cart attribute");
+    console.log("⚠️ MUP enforcement BYPASSED due to override cart attribute");
     return { operations: [{ validationAdd: { errors: [] } }] };
   }
 
@@ -188,26 +191,44 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     console.log("🔍 Checking product line:", line.id);
     console.log("  - Units per item:", unitsPerItem);
     
-    // Get the current price per item (includes discount code reductions, but NOT gift card payments)
-    const pricePerItem = parseFloat((line.cost as any).amountPerQuantity.amount);
+    // Get the current price per item (should include ALL discounts: codes, automatic, etc.)
+    // NOTE: Shopify amounts are in decimal format (pounds), not cents
+    // IMPORTANT: amountPerQuantity may not reflect discounts, so calculate from totalAmount
+    const totalAmount = parseFloat((line.cost as any).totalAmount.amount);
+    const amountPerQuantity = parseFloat((line.cost as any).amountPerQuantity.amount);
+    const quantity = line.quantity;
     
-    console.log("  - Price per item:", pricePerItem);
-    console.log("  ℹ️  NOTE: Gift cards are payment methods and not reflected in this price");
+    // Calculate price per item from total (this reflects ALL discounts)
+    // If total is 0, price per item is 0 (100% discount)
+    const pricePerItem = quantity > 0 ? totalAmount / quantity : amountPerQuantity;
     
-    // Calculate MUP floor
+    console.log("  - Total amount for line:", totalAmount);
+    console.log("  - Amount per quantity (may not reflect discounts):", amountPerQuantity);
+    console.log("  - Quantity:", quantity);
+    console.log("  - Calculated price per item (from total/quantity):", pricePerItem);
+    console.log("  ℹ️  NOTE: Using totalAmount/quantity to ensure discounts are included");
+    
+    // Calculate MUP floor (in pounds)
     const mupFloor = unitsPerItem * minimumUnitPrice;
-    console.log("  - MUP floor:", mupFloor);
+    console.log("  - MUP floor (pounds):", mupFloor);
+    console.log("  - Current price per item:", pricePerItem);
     
-    // If current price is below MUP floor, block checkout
-    // This will only trigger for discount codes, not gift card payments
-    if (pricePerItem < mupFloor) {
-      const shortfall = mupFloor - pricePerItem;
-      console.log("  ❌ PRICE BELOW MUP FLOOR!");
-      console.log("     Shortfall:", shortfall.toFixed(2));
-      console.log("     This is likely due to a discount code (gift cards don't affect line prices)");
+    // Block discounts that reduce price below MUP floor
+    // The validation should prevent discounts from violating MUP, not add a levy
+    if (pricePerItem < 0) {
+      console.log("  ❌ PRICE IS NEGATIVE - invalid state!");
+      errors.push({
+        message: `Invalid pricing detected. Please refresh and try again.`,
+        target: "$.checkout",
+      });
+    } else if (pricePerItem < mupFloor) {
+      console.log("  ❌ PRICE BELOW MUP FLOOR - discount violates MUP!");
+      console.log("     Current price: £" + pricePerItem.toFixed(2));
+      console.log("     Required minimum: £" + mupFloor.toFixed(2));
+      console.log("     Shortfall: £" + (mupFloor - pricePerItem).toFixed(2));
       
       errors.push({
-        message: `Discount codes cannot reduce the price below the Minimum Unit Pricing requirement. Current price: £${pricePerItem.toFixed(2)}, Minimum required: £${mupFloor.toFixed(2)}. Please remove or reduce your discount code.`,
+        message: `Discounts cannot reduce the price below the Minimum Unit Pricing requirement. Current price: £${pricePerItem.toFixed(2)}, Minimum required: £${mupFloor.toFixed(2)}. Please remove or adjust your discounts.`,
         target: "$.checkout",
       });
     } else {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   reactExtension,
   Banner,
@@ -136,6 +136,40 @@ function MupCheckoutGuidance() {
 
   // Check if customer has applied a discount code using the proper API
   const hasDiscountApplied = discountCodes.length > 0;
+  
+  // Check if there are any product lines (not levy lines)
+  const hasProductLines = cartLines.some(line => {
+    const mupAttr = line.attributes.find((attr: any) => attr.key === 'mup');
+    return mupAttr?.value !== 'true'; // Not a levy line
+  });
+  
+  // Check if there are any lines with MUP-related attributes (alcoholic products)
+  // OR if there are levy lines (definitely has alcoholic products)
+  const hasAlcoholicProducts = levyLines.length > 0 || cartLines.some(line => {
+    const mupAttr = line.attributes.find((attr: any) => attr.key === 'mup');
+    if (mupAttr?.value === 'true') return false; // Skip levy lines
+    
+    // Check for MUP attributes that indicate alcoholic products
+    return line.attributes.some((attr: any) => 
+      attr.key === 'mup_total_units' || 
+      attr.key === 'original_price' ||
+      attr.key === 'mup_levy_per_item'
+    );
+  });
+  
+  console.log('MUP Checkout Block State:', {
+    cartLinesCount: cartLines.length,
+    levyLinesCount: levyLines.length,
+    hasProductLines,
+    hasAlcoholicProducts,
+    hasDiscountApplied,
+    hasOverride,
+    ukRegion,
+    cartLines: cartLines.map(line => ({
+      id: line.id,
+      attributes: line.attributes
+    }))
+  });
 
   // Function to remove all discount codes
   const handleRemoveDiscounts = async () => {
@@ -160,20 +194,23 @@ function MupCheckoutGuidance() {
       {/* MUP Notice Banner */}
 
 
-      {/* Repair UI - Show when discount is applied in Scotland (but NOT if override is active) */}
-      {hasDiscountApplied && !hasOverride && (
+      {/* Repair UI - Show when discount is applied in Scotland AND we detect alcoholic products (but NOT if override is active) */}
+      {/* The validation function will actually block checkout if there's a MUP violation */}
+      {hasDiscountApplied && !hasOverride && (hasAlcoholicProducts || hasProductLines) && (
         <Banner status="critical">
           <BlockStack spacing="base">
-            <Heading level={3}>Checkout Blocked - MUP Violation</Heading>
+            <Heading level={3}>Possible MUP Violation</Heading>
             
             <Text>
-              Your discount reduces the price below the legal minimum unit price for Scotland.
+              If your item has an mup levy applied, then your discount reduces the price below the legal minimum unit price for Scotland. Please remove your discount code to proceed with checkout.
             </Text>
+
+            <Text>If your item does not have an mup levy applied, then your discount code is valid and you may proceed with checkout.</Text>
 
             <Divider />
 
             <BlockStack spacing="tight">
-              <Text emphasis="bold">How to complete your purchase:</Text>
+              <Text emphasis="bold">How to complete your purchase if you have an mup levy applied:</Text>
               <List>
                 <ListItem>Remove your discount code</ListItem>
               </List>

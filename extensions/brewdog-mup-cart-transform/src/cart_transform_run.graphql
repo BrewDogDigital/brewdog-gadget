@@ -25,7 +25,10 @@ query CartTransformRunInput {
           }
         }
       }
-      cost { amountPerQuantity { amount currencyCode } }
+      cost { 
+        amountPerQuantity { amount currencyCode }
+        totalAmount { amount currencyCode }
+      }
     }
   }
   shop {
