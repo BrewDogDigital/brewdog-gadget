@@ -27,6 +27,9 @@ query CartValidationsGenerateRunInput {
         totalAmount {
           amount
         }
+        amountPerQuantity {
+          amount
+        }
       }
     }
   }

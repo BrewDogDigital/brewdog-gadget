@@ -73,6 +73,22 @@ export const run = async ({ connections, logger }: any) => {
         type: "multi_line_text_field",
         ownerType: "SHOP",
       },
+      {
+        name: "MaxMind Account ID",
+        namespace: "custom",
+        key: "mup_maxmind_account_id",
+        description: "MaxMind GeoIP account ID for location detection",
+        type: "single_line_text_field",
+        ownerType: "SHOP",
+      },
+      {
+        name: "MaxMind License Key",
+        namespace: "custom",
+        key: "mup_maxmind_license_key",
+        description: "MaxMind GeoIP license key for location detection",
+        type: "single_line_text_field",
+        ownerType: "SHOP",
+      },
       // Product variant-level metafields
       {
         name: "Alcohol Units Per Item",

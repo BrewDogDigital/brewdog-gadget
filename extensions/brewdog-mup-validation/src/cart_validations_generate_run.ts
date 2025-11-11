@@ -171,7 +171,9 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
 
   console.log("🍺 Cart contains alcoholic products - proceeding with MUP validation");
 
-  // Check each product line to see if discounted price would violate MUP
+  // Check each product line to see if price would violate MUP
+  // NOTE: Gift cards are payment methods and DON'T reduce line item prices during validation.
+  //       Only discount codes reduce prices here, so this naturally blocks only discount violations.
   input.cart.lines.forEach(line => {
     // Get units from product metafield
     const variant = line.merchandise;
@@ -186,27 +188,26 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     console.log("🔍 Checking product line:", line.id);
     console.log("  - Units per item:", unitsPerItem);
     
-    // Get the DISCOUNTED price per item (totalAmount / quantity)
-    const totalAmount = parseFloat(line.cost.totalAmount.amount);
-    const quantity = line.quantity;
-    const currentPricePerItem = totalAmount / quantity;
+    // Get the current price per item (includes discount code reductions, but NOT gift card payments)
+    const pricePerItem = parseFloat((line.cost as any).amountPerQuantity.amount);
     
-    console.log("  - Total amount:", totalAmount);
-    console.log("  - Quantity:", quantity);
-    console.log("  - Current price per item (after discount):", currentPricePerItem);
+    console.log("  - Price per item:", pricePerItem);
+    console.log("  ℹ️  NOTE: Gift cards are payment methods and not reflected in this price");
     
     // Calculate MUP floor
     const mupFloor = unitsPerItem * minimumUnitPrice;
     console.log("  - MUP floor:", mupFloor);
     
     // If current price is below MUP floor, block checkout
-    if (currentPricePerItem < mupFloor) {
-      const shortfall = mupFloor - currentPricePerItem;
+    // This will only trigger for discount codes, not gift card payments
+    if (pricePerItem < mupFloor) {
+      const shortfall = mupFloor - pricePerItem;
       console.log("  ❌ PRICE BELOW MUP FLOOR!");
       console.log("     Shortfall:", shortfall.toFixed(2));
+      console.log("     This is likely due to a discount code (gift cards don't affect line prices)");
       
       errors.push({
-        message: `Discounts cannot reduce the price below the Minimum Unit Pricing requirement. Current price: £${currentPricePerItem.toFixed(2)}, Minimum required: £${mupFloor.toFixed(2)}. Please remove or reduce your discount code.`,
+        message: `Discount codes cannot reduce the price below the Minimum Unit Pricing requirement. Current price: £${pricePerItem.toFixed(2)}, Minimum required: £${mupFloor.toFixed(2)}. Please remove or reduce your discount code.`,
         target: "$.checkout",
       });
     } else {

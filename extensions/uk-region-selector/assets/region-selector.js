@@ -577,7 +577,7 @@ async function checkForOverrideDiscount() {
 async function fetchOverrideCodes() {
   try {
     // Attempt to fetch from the Gadget app endpoint
-    const response = await fetch('/apps/mup/override-codes.json');
+    const response = await fetch('https://brewdog--development.gadget.app/apps/mup/override-codes');
     if (response.ok) {
       const data = await response.json();
       if (data.success && data.codes && data.codes.length > 0) {

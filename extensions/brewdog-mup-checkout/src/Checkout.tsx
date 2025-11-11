@@ -48,7 +48,7 @@ function MupCheckoutGuidance() {
   const discountCodes = useDiscountCodes();
   const applyDiscountCodeChange = useApplyDiscountCodeChange();
   const [isRemovingDiscount, setIsRemovingDiscount] = useState(false);
-  
+
   // Get addresses
   const billingAddress = useBillingAddress();
   const shippingAddress = useShippingAddress();

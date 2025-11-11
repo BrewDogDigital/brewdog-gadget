@@ -27,6 +27,12 @@ export const run = async ({ connections, logger }: any) => {
           geoipEnabled: metafield(namespace: "custom", key: "mup_geoip_enabled") {
             value
           }
+          maxmindAccountId: metafield(namespace: "custom", key: "mup_maxmind_account_id") {
+            value
+          }
+          maxmindLicenseKey: metafield(namespace: "custom", key: "mup_maxmind_license_key") {
+            value
+          }
           overrideCodes: metafield(namespace: "custom", key: "mup_override_codes") {
             value
           }
@@ -48,6 +54,8 @@ export const run = async ({ connections, logger }: any) => {
         minimumUnitPrice: shop.minimumUnitPrice?.value || "0.65",
         enforcementEnabled: shop.enforcementEnabled?.value === "true",
         geoipEnabled: shop.geoipEnabled?.value === "true",
+        maxmindAccountId: shop.maxmindAccountId?.value || "",
+        maxmindLicenseKey: shop.maxmindLicenseKey?.value || "",
         overrideCodes: shop.overrideCodes?.value || "",
       },
     };

@@ -1,8 +1,9 @@
-api_version = "2024-10"
+api_version = "2025-01"
 
 [[extensions]]
 name = "t:name"
 handle = "uwp-pfand"
+uid = "54945f46-6c8c-7860-aac2-c62bbdc1d8bcbde6f62c"
 type = "function"
 
 description = "t:description"

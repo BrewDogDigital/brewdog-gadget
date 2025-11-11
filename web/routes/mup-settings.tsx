@@ -9,6 +9,8 @@ export default function MupSettingsPage() {
   const [minimumUnitPrice, setMinimumUnitPrice] = useState("0.65");
   const [enforcementEnabled, setEnforcementEnabled] = useState(true);
   const [geoipEnabled, setGeoipEnabled] = useState(false);
+  const [maxmindAccountId, setMaxmindAccountId] = useState("");
+  const [maxmindLicenseKey, setMaxmindLicenseKey] = useState("");
   const [overrideCodes, setOverrideCodes] = useState<string[]>([]);
   const [newCodeInput, setNewCodeInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -34,6 +36,8 @@ export default function MupSettingsPage() {
         setMinimumUnitPrice(result.settings.minimumUnitPrice || "0.65");
         setEnforcementEnabled(result.settings.enforcementEnabled !== false);
         setGeoipEnabled(result.settings.geoipEnabled || false);
+        setMaxmindAccountId(result.settings.maxmindAccountId || "");
+        setMaxmindLicenseKey(result.settings.maxmindLicenseKey || "");
         
         // Parse override codes from string to array
         const codesString = result.settings.overrideCodes || "";
@@ -65,6 +69,8 @@ export default function MupSettingsPage() {
         minimumUnitPrice,
         enforcementEnabled,
         geoipEnabled,
+        maxmindAccountId,
+        maxmindLicenseKey,
         overrideCodes: overrideCodesString,
       });
       setMessage("✅ Settings saved successfully!");
@@ -114,6 +120,8 @@ export default function MupSettingsPage() {
         minimumUnitPrice,
         enforcementEnabled,
         geoipEnabled,
+        maxmindAccountId,
+        maxmindLicenseKey,
         overrideCodes: overrideCodesString,
       });
 
@@ -180,8 +188,37 @@ export default function MupSettingsPage() {
               label="Enable GeoIP Detection"
               checked={geoipEnabled}
               onChange={setGeoipEnabled}
-              helpText="Automatically detect customer location using GeoIP (experimental)"
+              helpText="Automatically detect customer location using MaxMind GeoIP"
             />
+            
+            {geoipEnabled && (
+              <BlockStack gap="300">
+                <TextField
+                  label="MaxMind Account ID"
+                  value={maxmindAccountId}
+                  onChange={setMaxmindAccountId}
+                  autoComplete="off"
+                  helpText="Your MaxMind account ID (e.g., 1237981)"
+                  placeholder="Enter MaxMind Account ID"
+                />
+                
+                <TextField
+                  label="MaxMind License Key"
+                  value={maxmindLicenseKey}
+                  onChange={setMaxmindLicenseKey}
+                  autoComplete="off"
+                  type="password"
+                  helpText="Your MaxMind license key for GeoIP API access"
+                  placeholder="Enter MaxMind License Key"
+                />
+                
+                <Banner tone="info">
+                  <Text as="p" variant="bodySm">
+                    MaxMind GeoIP2 credentials are required for automatic location detection. <Link url="https://www.maxmind.com/en/geolite2/signup" external>Sign up for a free MaxMind account</Link> to get your credentials.
+                  </Text>
+                </Banner>
+              </BlockStack>
+            )}
             
             <Divider />
             
