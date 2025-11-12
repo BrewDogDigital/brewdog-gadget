@@ -6,7 +6,7 @@ export const settings: GadgetSettings = {
   plugins: {
     connections: {
       shopify: {
-        apiVersion: "2025-07",
+        apiVersion: "2024-04",
         enabledModels: [
           "shopifyBillingAddress",
           "shopifyCart",
