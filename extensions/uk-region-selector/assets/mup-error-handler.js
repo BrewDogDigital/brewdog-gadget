@@ -189,3 +189,4 @@
   console.log('[MUP Error Handler] Initialized - listening for MUP violations');
 })();
 
+

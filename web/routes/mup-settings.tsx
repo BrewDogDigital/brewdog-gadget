@@ -150,6 +150,10 @@ export default function MupSettingsPage() {
       title="Minimum Unit Pricing"
       secondaryActions={[
         {
+          content: "Documentation",
+          url: "/mup-documentation",
+        },
+        {
           content: "Health Check",
           url: "/mup-health-check",
         },
@@ -169,7 +173,8 @@ export default function MupSettingsPage() {
       <BlockStack gap="400">
         <Banner tone="info">
           <Text as="p">
-            Configure MUP settings for Scotland compliance. <Link url="/mup-health-check">Run a health check</Link> to scan products for missing alcohol unit data.
+            Configure MUP settings for Scotland compliance. <Link url="/mup-health-check">Run a health check</Link> to scan products for missing alcohol unit data. 
+            View the <Link url="/mup-documentation">complete documentation</Link> for setup guides and troubleshooting.
           </Text>
         </Banner>
         
@@ -256,7 +261,7 @@ export default function MupSettingsPage() {
             </BlockStack>
             
             <Divider />
-            
+
             <Text as="h2" variant="headingMd">Discount Override Codes</Text>
             
             <Text as="p" variant="bodySm" tone="subdued">
