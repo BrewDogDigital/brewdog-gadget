@@ -1,0 +1,18 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "8eab18c64ba299d2fc45a06a2721abe8"
+name = "UWP Brewdog Dev"
+application_url = "https://brewdog--development.gadget.app/api/shopify/install-or-render"
+embedded = true
+handle = "uwp-brewdog-dev"
+
+[webhooks]
+api_version = "2024-07"
+
+[auth]
+redirect_urls = [
+  "https://brewdog--development.gadget.app/api/connections/auth/shopify/callback"
+]
+
+[pos]
+embedded = false
