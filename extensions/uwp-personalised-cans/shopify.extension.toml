@@ -1,8 +1,9 @@
-api_version = "2024-10"
+api_version = "2025-07"
 
 [[extensions]]
 name = "t:name"
 handle = "uwp-personalised-cans"
+uid = "1e281b30-f08e-4063-78d1-ee30b5eae8708ca3cd4a"
 type = "function"
 
 description = "t:description"

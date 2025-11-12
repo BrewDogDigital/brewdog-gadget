@@ -7,6 +7,9 @@ describe('product discounts function', () => {
     const result = run({
       discountNode: {
         metafield: null
+      },
+      cart: {
+        lines: []
       }
     });
     const expected: FunctionResult = {

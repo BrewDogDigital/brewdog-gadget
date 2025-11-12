@@ -1,8 +1,9 @@
-api_version = "2024-10"
+api_version = "2025-07"
 
 [[extensions]]
 name = "t:name"
 handle = "uwp-brewdog-v2"
+uid = "0c430861-2f7e-1e29-aad6-b0d87cef0f6aedb1f6c7"
 type = "function"
 
 description = "t:description"

@@ -3,11 +3,12 @@
 
 # The version of APIs your extension will receive. Learn more:
 # https://shopify.dev/docs/api/usage/versioning
-api_version = "2024-10"
+api_version = "2025-07"
 
 [[extensions]]
 name = "uwp-bloomreach-consent"
 handle = "uwp-bloomreach-consent"
+uid = "24a34d65-ba5b-6de1-45d5-f0a321417b73f0d54496"
 type = "ui_extension"
 
 

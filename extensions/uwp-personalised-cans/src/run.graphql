@@ -1,5 +1,9 @@
 query RunInput {
   cart {
+    buyerIdentity {
+      email
+      isAuthenticated
+    }
     lines {
 
       id
