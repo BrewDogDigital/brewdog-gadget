@@ -22,13 +22,32 @@ function isScottishPostcode(postcode: string | null | undefined): boolean {
   
   const normalized = postcode.trim().toUpperCase().replace(/\s+/g, '');
   
+  // Scottish postcode prefixes (excluding G to handle Glasgow vs Guildford separately)
   const scottishPrefixes = [
-    'AB', 'DD', 'DG', 'EH', 'FK', 'G', 
+    'AB', 'DD', 'DG', 'EH', 'FK',
     'HS', 'IV', 'KA', 'KW', 'KY', 'ML', 
     'PA', 'PH', 'TD', 'ZE'
   ];
   
-  return scottishPrefixes.some(prefix => normalized.startsWith(prefix));
+  // Check standard prefixes
+  if (scottishPrefixes.some(prefix => normalized.startsWith(prefix))) {
+    return true;
+  }
+  
+  // Special handling for Glasgow (G1-G9) - exclude Guildford (GU), Gloucester (GL), and Guernsey (GY)
+  // Glasgow postcodes: G followed by a digit (G1, G2, G3, etc.)
+  // Guildford postcodes: GU (England)
+  // Gloucester postcodes: GL (England)
+  // Guernsey postcodes: GY (Channel Islands)
+  if (normalized.startsWith('G') && !normalized.startsWith('GU') && !normalized.startsWith('GL') && !normalized.startsWith('GY')) {
+    // Check if second character is a digit (G1-G9 are Glasgow)
+    const secondChar = normalized.charAt(1);
+    if (secondChar && /[0-9]/.test(secondChar)) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 export async function onSuccess({ params, record, logger, api, connections, emails }) {
@@ -131,70 +150,70 @@ export async function onSuccess({ params, record, logger, api, connections, emai
         
         // First, update tags and note
         const updateResult = await connections.shopify.current?.graphql(
-          `mutation orderUpdate($input: OrderInput!) {
-            orderUpdate(input: $input) {
-              order {
-                id
-                tags
-                note
-              }
-              userErrors {
-                field
-                message
-              }
+        `mutation orderUpdate($input: OrderInput!) {
+          orderUpdate(input: $input) {
+            order {
+              id
+              tags
+              note
             }
-          }`,
-          {
-            input: {
-              id: shopifyGid,
-              tags: tagsString,
-              note: complianceNote
+            userErrors {
+              field
+              message
             }
           }
-        );
-        
-        if (updateResult?.orderUpdate?.userErrors?.length > 0) {
-          logger.error({ 
-            errors: updateResult.orderUpdate.userErrors, 
-            orderId: record.id 
-          }, "Shopify returned errors when updating order");
-        } else {
-          logger.info({ 
-            orderId: record.id,
-            tags: updateResult?.orderUpdate?.order?.tags,
-            note: updateResult?.orderUpdate?.order?.note
-          }, "Successfully updated order in Shopify with tags and note");
+        }`,
+        {
+          input: {
+            id: shopifyGid,
+            tags: tagsString,
+            note: complianceNote
+          }
         }
+      );
+      
+      if (updateResult?.orderUpdate?.userErrors?.length > 0) {
+        logger.error({ 
+          errors: updateResult.orderUpdate.userErrors, 
+          orderId: record.id 
+        }, "Shopify returned errors when updating order");
+      } else {
+        logger.info({ 
+          orderId: record.id,
+          tags: updateResult?.orderUpdate?.order?.tags,
+          note: updateResult?.orderUpdate?.order?.note
+        }, "Successfully updated order in Shopify with tags and note");
+      }
+      
+      // Schedule fulfillment hold placement after 1 minute
+      // Fulfillment orders are created asynchronously by Shopify, so we delay the hold placement
+      try {
+        logger.info({ 
+          orderId: record.id
+        }, "Scheduling fulfillment hold placement in 1 minute (allows Shopify time to create fulfillment orders)");
         
-        // Schedule fulfillment hold placement after 1 minute
-        // Fulfillment orders are created asynchronously by Shopify, so we delay the hold placement
-        try {
-          logger.info({ 
-            orderId: record.id
-          }, "Scheduling fulfillment hold placement in 1 minute (allows Shopify time to create fulfillment orders)");
-          
-          // Use setTimeout to schedule the action call after 60 seconds
-          setTimeout(async () => {
-            try {
-              await api.placeMupFulfillmentHold({ orderId: record.id });
-            } catch (scheduleError) {
-              logger.error({ 
-                error: scheduleError, 
-                orderId: record.id 
-              }, "Failed to execute scheduled fulfillment hold placement");
-            }
-          }, 60000); // 60 seconds = 1 minute
-          
-          logger.info({ 
-            orderId: record.id
-          }, "Fulfillment hold placement scheduled successfully");
-          
-        } catch (scheduleError) {
-          logger.error({ error: scheduleError, orderId: record.id }, "Failed to schedule fulfillment hold placement");
-        }
+        // Use setTimeout to schedule the action call after 60 seconds
+        setTimeout(async () => {
+          try {
+            await api.placeMupFulfillmentHold({ orderId: record.id });
+          } catch (scheduleError) {
+            logger.error({ 
+              error: scheduleError, 
+              orderId: record.id 
+            }, "Failed to execute scheduled fulfillment hold placement");
+          }
+        }, 60000); // 60 seconds = 1 minute
         
-        // Send email to customer service
-        const emailTemplate = `
+        logger.info({ 
+          orderId: record.id
+        }, "Fulfillment hold placement scheduled successfully");
+        
+      } catch (scheduleError) {
+        logger.error({ error: scheduleError, orderId: record.id }, "Failed to schedule fulfillment hold placement");
+      }
+      
+      // Send email to customer service
+      const emailTemplate = `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -285,52 +304,52 @@ export async function onSuccess({ params, record, logger, api, connections, emai
           </div>
         </body>
         </html>
-        `;
+      `;
+      
+      try {
+        // Get shop data with all available fields for debugging
+        const shopRecord = await api.shopifyShop.findOne(record.shopId);
         
-        try {
-          // Get shop data with all available fields for debugging
-          const shopRecord = await api.shopifyShop.findOne(record.shopId);
-          
-          logger.info({ 
-            shopId: record.shopId,
-            myshopifyDomain: shopRecord?.myshopifyDomain,
-            domain: shopRecord?.domain,
-            shopName: shopRecord?.name
-          }, "Shop data for order URL");
-          
-          // Use the myshopifyDomain field which is the permanent admin domain (e.g., brewdog-dev.myshopify.com)
-          const shopDomain = shopRecord?.myshopifyDomain || shopRecord?.domain || 'brewdog-dev.myshopify.com';
-          // Use numeric ID if shopifyId GID isn't available yet
-          const orderId = record.shopifyId ? record.shopifyId.split('/').pop() : record.id;
-          const orderUrl = `https://${shopDomain}/admin/orders/${orderId}`;
-          
-          logger.info({ shopDomain, orderId, orderUrl }, "Constructed order URL");
+        logger.info({ 
+          shopId: record.shopId,
+          myshopifyDomain: shopRecord?.myshopifyDomain,
+          domain: shopRecord?.domain,
+          shopName: shopRecord?.name
+        }, "Shop data for order URL");
         
-          const emailTo = process.env.MUP_COMPLIANCE_EMAIL || "hello@brewdog.com";
-          
-          await emails.sendMail({
-            to: emailTo,
-            subject: `MUP Compliance Review Required - Order ${record.name}`,
-            html: DefaultEmailTemplates.renderEmailTemplate(emailTemplate, {
-              orderName: record.name || 'Unknown',
-              orderId: record.id,
-              customerEmail: record.email || 'Not provided',
-              billingPostcode: billingPostcode,
-              shippingPostcode: shippingPostcode || 'Not provided',
-              ukRegion: ukRegion,
-              orderUrl: orderUrl
-            }),
-          });
-          
-          logger.info({ orderId: record.id, to: process.env.MUP_COMPLIANCE_EMAIL }, "Sent MUP compliance email to customer service");
-        } catch (emailError) {
-          logger.error({ error: emailError, orderId: record.id }, "Failed to send MUP compliance email");
-          // Don't throw - we still want the order to be created with the tag and note
-        }
+        // Use the myshopifyDomain field which is the permanent admin domain (e.g., brewdog-dev.myshopify.com)
+        const shopDomain = shopRecord?.myshopifyDomain || shopRecord?.domain || 'brewdog-dev.myshopify.com';
+        // Use numeric ID if shopifyId GID isn't available yet
+        const orderId = record.shopifyId ? record.shopifyId.split('/').pop() : record.id;
+        const orderUrl = `https://${shopDomain}/admin/orders/${orderId}`;
         
-      } catch (error) {
-        logger.error({ error, orderId: record.id }, "Failed to process MUP non-compliance");
+        logger.info({ shopDomain, orderId, orderUrl }, "Constructed order URL");
+      
+      const emailTo = process.env.MUP_COMPLIANCE_EMAIL || "";
+      
+      await emails.sendMail({
+          to: emailTo,
+          subject: `MUP Compliance Review Required - Order ${record.name}`,
+          html: DefaultEmailTemplates.renderEmailTemplate(emailTemplate, {
+            orderName: record.name || 'Unknown',
+            orderId: record.id,
+            customerEmail: record.email || 'Not provided',
+            billingPostcode: billingPostcode,
+            shippingPostcode: shippingPostcode || 'Not provided',
+            ukRegion: ukRegion,
+            orderUrl: orderUrl
+          }),
+        });
+        
+        logger.info({ orderId: record.id, to: process.env.MUP_COMPLIANCE_EMAIL }, "Sent MUP compliance email to customer service");
+      } catch (emailError) {
+        logger.error({ error: emailError, orderId: record.id }, "Failed to send MUP compliance email");
+        // Don't throw - we still want the order to be created with the tag and note
       }
+      
+    } catch (error) {
+      logger.error({ error, orderId: record.id }, "Failed to process MUP non-compliance");
+    }
     } else {
       logger.info("Order passes MUP compliance check");
     }
