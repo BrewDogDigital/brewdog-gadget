@@ -48,7 +48,8 @@ export const run = async ({ params, connections, logger }: any) => {
     }
   `;
 
-  const metafieldsInput = [
+  // Build metafields array, only including optional fields if they have values
+  const metafieldsInput: any[] = [
     {
       ownerId: shopId,
       namespace: "custom",
@@ -77,28 +78,38 @@ export const run = async ({ params, connections, logger }: any) => {
       type: "boolean",
       value: String(geoipEnabled),
     },
-    {
+  ];
+
+  // Only include optional metafields if they have non-empty values
+  if (maxmindAccountId && maxmindAccountId.trim() !== "") {
+    metafieldsInput.push({
       ownerId: shopId,
       namespace: "custom",
       key: "mup_maxmind_account_id",
       type: "single_line_text_field",
       value: String(maxmindAccountId),
-    },
-    {
+    });
+  }
+
+  if (maxmindLicenseKey && maxmindLicenseKey.trim() !== "") {
+    metafieldsInput.push({
       ownerId: shopId,
       namespace: "custom",
       key: "mup_maxmind_license_key",
       type: "single_line_text_field",
       value: String(maxmindLicenseKey),
-    },
-    {
+    });
+  }
+
+  if (overrideCodes && overrideCodes.trim() !== "") {
+    metafieldsInput.push({
       ownerId: shopId,
       namespace: "custom",
       key: "mup_override_codes",
       type: "multi_line_text_field",
       value: String(overrideCodes),
-    },
-  ];
+    });
+  }
 
   logger.info({ metafieldsInput }, "Attempting to set metafields");
 
@@ -107,13 +118,34 @@ export const run = async ({ params, connections, logger }: any) => {
   });
 
   const errors = (setResp as any)?.metafieldsSet?.userErrors ?? [];
-  if (errors.length) {
-    logger.error({ errors }, "metafieldsSet returned errors");
-    throw new Error(`Failed to save settings: ${JSON.stringify(errors)}`);
+  const metafields = (setResp as any)?.metafieldsSet?.metafields ?? [];
+
+  // Separate critical errors (first 4 metafields) from optional ones
+  const criticalErrors = errors.filter((error: any) => {
+    // Check if error is for one of the first 4 critical metafields
+    const errorField = error.field?.[1]; // field array format: ["metafields", index, "value"]
+    const errorIndex = parseInt(errorField);
+    return errorIndex !== undefined && errorIndex < 4;
+  });
+
+  const optionalErrors = errors.filter((error: any) => {
+    const errorField = error.field?.[1];
+    const errorIndex = parseInt(errorField);
+    return errorIndex !== undefined && errorIndex >= 4;
+  });
+
+  // Log optional errors as warnings but don't fail
+  if (optionalErrors.length > 0) {
+    logger.warn({ optionalErrors }, "Some optional metafields failed to save, but continuing");
   }
 
-  const metafields = (setResp as any)?.metafieldsSet?.metafields ?? [];
-  logger.info({ metafields }, "MUP settings saved successfully");
+  // Only throw if critical metafields failed
+  if (criticalErrors.length > 0) {
+    logger.error({ criticalErrors, optionalErrors }, "Critical metafields failed to save");
+    throw new Error(`Failed to save critical settings: ${JSON.stringify(criticalErrors)}`);
+  }
 
-  return { success: true, metafields };
+  logger.info({ metafields, optionalErrors: optionalErrors.length > 0 ? optionalErrors : undefined }, "MUP settings saved successfully");
+
+  return { success: true, metafields, warnings: optionalErrors.length > 0 ? optionalErrors : undefined };
 };
