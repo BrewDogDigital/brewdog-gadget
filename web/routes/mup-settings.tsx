@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { Page, Card, TextField, Button, InlineStack, Text, Banner, Spinner, BlockStack, Link, Checkbox, Divider } from "@shopify/polaris";
+import { Page, Card, TextField, Button, InlineStack, Text, Banner, Spinner, BlockStack, Link as PolarisLink, Checkbox, Divider } from "@shopify/polaris";
 import { useFindFirst } from "@gadgetinc/react";
+import { useNavigate, Link } from "react-router-dom";
 import { api } from "../api";
 import React from "react";
 
 export default function MupSettingsPage() {
+  const navigate = useNavigate();
   const [levyVariantId, setLevyVariantId] = useState("");
   const [minimumUnitPrice, setMinimumUnitPrice] = useState("0.65");
   const [enforcementEnabled, setEnforcementEnabled] = useState(true);
@@ -151,11 +153,11 @@ export default function MupSettingsPage() {
       secondaryActions={[
         {
           content: "Documentation",
-          url: "/mup-documentation",
+          onAction: () => navigate("/mup-documentation"),
         },
         {
           content: "Health Check",
-          url: "/mup-health-check",
+          onAction: () => navigate("/mup-health-check"),
         },
         {
           content: "Setup Metafields",
@@ -173,8 +175,8 @@ export default function MupSettingsPage() {
       <BlockStack gap="400">
         <Banner tone="info">
           <Text as="p">
-            Configure MUP settings for Scotland compliance. <Link url="/mup-health-check">Run a health check</Link> to scan products for missing alcohol unit data. 
-            View the <Link url="/mup-documentation">complete documentation</Link> for setup guides and troubleshooting.
+            Configure MUP settings for Scotland compliance. <Link to="/mup-health-check">Run a health check</Link> to scan products for missing alcohol unit data. 
+            View the <Link to="/mup-documentation">complete documentation</Link> for setup guides and troubleshooting.
           </Text>
         </Banner>
         
@@ -219,7 +221,7 @@ export default function MupSettingsPage() {
                 
                 <Banner tone="info">
                   <Text as="p" variant="bodySm">
-                    MaxMind GeoIP2 credentials are required for automatic location detection. <Link url="https://www.maxmind.com/en/geolite2/signup" external>Sign up for a free MaxMind account</Link> to get your credentials.
+                    MaxMind GeoIP2 credentials are required for automatic location detection. <PolarisLink url="https://www.maxmind.com/en/geolite2/signup" external>Sign up for a free MaxMind account</PolarisLink> to get your credentials.
                   </Text>
                 </Banner>
               </BlockStack>
