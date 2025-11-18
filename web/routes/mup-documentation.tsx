@@ -104,36 +104,8 @@ export default function MupDocumentationPage() {
             <List.Item>Click <strong>"Save Settings"</strong></List.Item>
           </List>
 
-          <Text variant="headingMd" as="h3">Step 4: Activate Functions</Text>
-          <Text variant="bodyMd" as="p">
-            After deploying extensions, the Cart Transform function needs to be activated in your Shopify store.
-          </Text>
           
-          <List type="number">
-            <List.Item>
-              Go to <strong>MUP Settings</strong> in the app navigation
-            </List.Item>
-            <List.Item>
-              Scroll to the <strong>"Function Activation"</strong> section
-            </List.Item>
-            <List.Item>
-              Click the <strong>"Activate Cart Transform"</strong> button
-            </List.Item>
-            <List.Item>
-              Wait for the success message confirming activation
-            </List.Item>
-          </List>
-
-          <Box paddingBlockStart="400">
-            <Banner tone="info">
-              <Text as="p">
-                <strong>Note:</strong> The Cart & Checkout Validation function activates automatically when deployed. 
-                You can verify both functions are active in <strong>Shopify Admin → Settings → Functions</strong>.
-              </Text>
-            </Banner>
-          </Box>
-
-          <Text variant="headingMd" as="h3">Step 5: Configure Product Data</Text>
+          <Text variant="headingMd" as="h3">Step 4: Configure Product Data</Text>
           <List type="number">
             <List.Item>For each alcoholic product, add the <strong>total_units</strong> metafield (namespace: <code>custom</code>, key: <code>total_units</code>)</List.Item>
             <List.Item>Use the <strong>MUP Health Check</strong> page to identify products missing unit data</List.Item>

@@ -112,7 +112,7 @@
           <small>{{ block.settings.levy_note | default: "Final levy calculated at checkout" }}</small>
         {% else %}
           <div style="padding: 0.5rem; background: #ffe; border: 1px solid #ffb; border-radius: 4px; font-size: 0.75rem;">
-            <strong>Debug:</strong> No levy required - prices are at or above minimum.<br>
+            No levy required - prices are at or above minimum.<br>
             <small>Levy only applies when discounted price drops below £{{ minimum_unit_price }} per unit.</small>
           </div>
         {% endif %}

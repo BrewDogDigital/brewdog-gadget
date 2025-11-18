@@ -45,7 +45,7 @@ export default function MupSettingsPage() {
         const codesString = result.settings.overrideCodes || "";
         const codesArray = codesString
           .split(/[,\n]+/)
-          .map((code: string) => code.trim().toUpperCase())
+          .map((code: string) => code.trim())
           .filter((code: string) => code.length > 0);
         setOverrideCodes(codesArray);
       }
@@ -84,7 +84,7 @@ export default function MupSettingsPage() {
   };
 
   const addOverrideCode = () => {
-    const code = newCodeInput.trim().toUpperCase();
+    const code = newCodeInput.trim();
     
     if (!code) {
       setError("Please enter a discount code");

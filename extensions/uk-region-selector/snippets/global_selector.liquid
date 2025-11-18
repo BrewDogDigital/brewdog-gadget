@@ -251,6 +251,12 @@
   </div>
 </div>
 
+<!-- Toast Notification -->
+<div id="uk-region-toast" class="uk-region-toast">
+  <span class="uk-region-toast__icon">⚠️</span>
+  <span class="uk-region-toast__message">Scotland selected — orders may be subject to MUP restrictions and levies.</span>
+</div>
+
 <script>
 (function() {
   'use strict';
@@ -274,6 +280,20 @@
     document.cookie = `${name}=${value};${expires};path=/`;
   }
 
+  // Show toast notification for Scotland
+  function showScotlandToast() {
+    const toast = document.getElementById('uk-region-toast');
+    if (!toast) return;
+    
+    // Show toast
+    toast.classList.add('show');
+    
+    // Hide after 5 seconds
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 5000);
+  }
+
   async function setCartAttribute(region) {
     try {
       const response = await fetch('/cart/update.js', {
@@ -288,6 +308,12 @@
       });
       if (response.ok) {
         console.log('[Region Selector] Cart attribute updated:', region);
+        
+        // Show toast notification if Scotland is selected
+        if (region === 'scotland') {
+          showScotlandToast();
+        }
+        
         return await response.json();
       }
     } catch (error) {
@@ -338,33 +364,67 @@
     const modalSubmit = modal.querySelector('[data-modal-submit]');
     const modalCloseButtons = modal.querySelectorAll('[data-modal-close]');
 
-    // Auto-inject selector into specified element
-    const autoInjectSelector = "{{ app.settings.auto_inject_selector | default: 'header' }}";
+    // Auto-inject selector into specified element (mobile/desktop aware)
+    const desktopSelector = "{{ app.settings.auto_inject_selector | default: 'header' }}";
+    const mobileSelector = "{{ app.settings.mobile_inject_selector }}";
     const injectPosition = "{{ app.settings.inject_position | default: 'prepend' }}";
     
-    if (autoInjectSelector) {
-      console.log('[Region Selector] Auto-inject selector:', autoInjectSelector);
-      console.log('[Region Selector] Inject position:', injectPosition);
+    // Function to determine if we're on mobile
+    function isMobile() {
+      return window.innerWidth <= 768;
+    }
+    
+    // Function to get the appropriate selector based on screen size
+    function getTargetSelector() {
+      if (isMobile() && mobileSelector && mobileSelector.trim() !== '') {
+        return mobileSelector;
+      }
+      return desktopSelector;
+    }
+    
+    // Function to inject the selector
+    function injectSelector() {
+      const targetSelector = getTargetSelector();
       
-      const targetElement = document.querySelector(autoInjectSelector);
-      if (targetElement) {
-        console.log('[Region Selector] Target element found, injecting...');
+      if (targetSelector && targetSelector.trim() !== '') {
+        console.log('[Region Selector] Auto-inject selector:', targetSelector);
+        console.log('[Region Selector] Inject position:', injectPosition);
+        console.log('[Region Selector] Is mobile:', isMobile());
         
-        // Remove from current position
-        container.remove();
-        
-        // Inject at specified position
-        if (injectPosition === 'prepend') {
-          targetElement.prepend(container);
+        const targetElement = document.querySelector(targetSelector);
+        if (targetElement) {
+          console.log('[Region Selector] Target element found, injecting...');
+          
+          // Remove from current position if already injected
+          if (container.parentNode) {
+            container.remove();
+          }
+          
+          // Inject at specified position
+          if (injectPosition === 'prepend') {
+            targetElement.prepend(container);
+          } else {
+            targetElement.append(container);
+          }
+          
+          console.log('[Region Selector] Injected into:', targetSelector);
         } else {
-          targetElement.append(container);
+          console.warn('[Region Selector] Target element not found:', targetSelector);
         }
-        
-        console.log('[Region Selector] Injected into:', autoInjectSelector);
-      } else {
-        console.warn('[Region Selector] Target element not found:', autoInjectSelector);
       }
     }
+    
+    // Initial injection
+    injectSelector();
+    
+    // Re-inject on window resize to handle mobile/desktop switching
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        injectSelector();
+      }, 250);
+    });
 
     // Show selector
     container.style.display = 'flex';

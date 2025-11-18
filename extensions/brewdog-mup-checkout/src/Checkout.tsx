@@ -32,13 +32,32 @@ function isScottishPostcode(postcode: string | null | undefined): boolean {
   
   const normalized = postcode.trim().toUpperCase().replace(/\s+/g, '');
   
+  // Scottish postcode prefixes (excluding G to handle Glasgow vs Guildford separately)
   const scottishPrefixes = [
-    'AB', 'DD', 'DG', 'EH', 'FK', 'G', 
+    'AB', 'DD', 'DG', 'EH', 'FK',
     'HS', 'IV', 'KA', 'KW', 'KY', 'ML', 
     'PA', 'PH', 'TD', 'ZE'
   ];
   
-  return scottishPrefixes.some(prefix => normalized.startsWith(prefix));
+  // Check standard prefixes
+  if (scottishPrefixes.some(prefix => normalized.startsWith(prefix))) {
+    return true;
+  }
+  
+  // Special handling for Glasgow (G1-G9) - exclude Guildford (GU), Gloucester (GL), and Guernsey (GY)
+  // Glasgow postcodes: G followed by a digit (G1, G2, G3, etc.)
+  // Guildford postcodes: GU (England)
+  // Gloucester postcodes: GL (England)
+  // Guernsey postcodes: GY (Channel Islands)
+  if (normalized.startsWith('G') && !normalized.startsWith('GU') && !normalized.startsWith('GL') && !normalized.startsWith('GY')) {
+    // Check if second character is a digit (G1-G9 are Glasgow)
+    const secondChar = normalized.charAt(1);
+    if (secondChar && /[0-9]/.test(secondChar)) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 function MupCheckoutGuidance() {
@@ -114,13 +133,46 @@ function MupCheckoutGuidance() {
     return null;
   }
 
-  console.log('✅ Customer is in Scotland - showing MUP UI');
+  console.log('✅ Customer is in Scotland - checking if MUP enforcement is active');
 
   // Find all MUP levy lines
   const levyLines = cartLines.filter(line => {
     const mupAttr = line.attributes.find((attr: any) => attr.key === 'mup');
     return mupAttr?.value === 'true';
   });
+
+  // Check if there are alcoholic products (products with units_per_item metafield or MUP attributes)
+  // but no levy lines - this indicates enforcement is disabled
+  const hasAlcoholicProducts = cartLines.some(line => {
+    const mupAttr = line.attributes.find((attr: any) => attr.key === 'mup');
+    if (mupAttr?.value === 'true') return false; // Skip levy lines
+    
+    // Check for MUP attributes that indicate alcoholic products
+    return line.attributes.some((attr: any) => 
+      attr.key === 'mup_total_units' || 
+      attr.key === 'original_price' ||
+      attr.key === 'mup_levy_per_item'
+    );
+  });
+
+  // Check if customer has applied a discount code
+  const hasDiscountApplied = discountCodes.length > 0;
+  
+  // If customer is in Scotland but there are no levy lines and we can detect alcoholic products,
+  // it means enforcement is disabled - don't show MUP UI UNLESS there's a discount applied
+  // (in which case we need to show the discount warning)
+  if (hasAlcoholicProducts && levyLines.length === 0 && !hasDiscountApplied) {
+    console.log('⏭️ MUP enforcement appears to be disabled (Scotland customer with alcoholic products but no levy lines)');
+    return null;
+  }
+
+  // If no alcoholic products detected, also don't show MUP UI UNLESS there's a discount applied
+  if (!hasAlcoholicProducts && levyLines.length === 0 && !hasDiscountApplied) {
+    console.log('⏭️ No alcoholic products detected - not showing MUP UI');
+    return null;
+  }
+
+  console.log('✅ Customer is in Scotland - showing MUP UI');
 
   // Calculate total levy amount
   const totalLevy = levyLines.reduce((sum, line) => {
@@ -133,28 +185,11 @@ function MupCheckoutGuidance() {
   // Simple detection: if there are levy lines, show info
   // The validation function will block checkout if there's an actual violation
   const hasLevies = levyLines.length > 0;
-
-  // Check if customer has applied a discount code using the proper API
-  const hasDiscountApplied = discountCodes.length > 0;
   
   // Check if there are any product lines (not levy lines)
   const hasProductLines = cartLines.some(line => {
     const mupAttr = line.attributes.find((attr: any) => attr.key === 'mup');
     return mupAttr?.value !== 'true'; // Not a levy line
-  });
-  
-  // Check if there are any lines with MUP-related attributes (alcoholic products)
-  // OR if there are levy lines (definitely has alcoholic products)
-  const hasAlcoholicProducts = levyLines.length > 0 || cartLines.some(line => {
-    const mupAttr = line.attributes.find((attr: any) => attr.key === 'mup');
-    if (mupAttr?.value === 'true') return false; // Skip levy lines
-    
-    // Check for MUP attributes that indicate alcoholic products
-    return line.attributes.some((attr: any) => 
-      attr.key === 'mup_total_units' || 
-      attr.key === 'original_price' ||
-      attr.key === 'mup_levy_per_item'
-    );
   });
   
   console.log('MUP Checkout Block State:', {
@@ -299,9 +334,11 @@ function MupCheckoutGuidance() {
           <Text size="small">
             <Text emphasis="bold">Note:</Text> Discount codes that reduce prices below the minimum unit price will be automatically blocked at checkout.
           </Text>
-          <Link to="https://www.mygov.scot/minimum-unit-pricing-alcohol" external>
-            {translate('learn_more')}
-          </Link>
+          <Text size="small">
+            <Link url="https://www.mygov.scot/minimum-unit-pricing-alcohol" external>
+              {translate('learn_more')}
+            </Link>
+          </Text>
         </BlockStack>
       </Banner>
       

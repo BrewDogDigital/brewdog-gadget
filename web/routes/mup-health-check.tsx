@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { Page, Card, Button, DataTable, Badge, Banner, Text, InlineStack, BlockStack, Spinner, EmptyState, TextField, Collapsible } from "@shopify/polaris";
+import { useState, useCallback, useMemo } from "react";
+import { Page, Card, Button, DataTable, Badge, Banner, Text, InlineStack, BlockStack, Spinner, EmptyState, TextField, Collapsible, Select } from "@shopify/polaris";
 import { api } from "../api";
 import React from "react";
 
@@ -10,12 +10,14 @@ export default function MupHealthCheckPage() {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const [variantUpdates, setVariantUpdates] = useState<{ [key: string]: string }>({});
   const [savingVariants, setSavingVariants] = useState<Set<string>>(new Set());
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const runHealthCheck = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setSelectedCategory("all"); // Reset filter when running new health check
     try {
-      const response = await api.mupHealthCheck({ limit: 100 });
+      const response = await api.mupHealthCheck({ limit: 250 });
       setResults(response.results);
       // Initialize variant updates with current values
       const updates: { [key: string]: string } = {};
@@ -76,6 +78,47 @@ export default function MupHealthCheckPage() {
     }
   }, [variantUpdates, runHealthCheck]);
 
+  // Get unique product types (categories) from results
+  // Use allProductTypes from health check if available (includes all scanned products)
+  // Otherwise fall back to extracting from missing/partial products only
+  const categories = useMemo(() => {
+    if (!results) return [];
+    
+    // If health check returned allProductTypes, use that (includes all scanned products)
+    if (results.allProductTypes && Array.isArray(results.allProductTypes) && results.allProductTypes.length > 0) {
+      return results.allProductTypes;
+    }
+    
+    // Fallback: extract from missing/partial products only
+    const categorySet = new Set<string>();
+    results.missingDataProducts?.forEach((product: any) => {
+      if (product.productType && product.productType.trim() !== '') {
+        categorySet.add(product.productType);
+      }
+    });
+    results.partialDataProducts?.forEach((product: any) => {
+      if (product.productType && product.productType.trim() !== '') {
+        categorySet.add(product.productType);
+      }
+    });
+    return Array.from(categorySet).sort();
+  }, [results]);
+
+  // Filter products by selected category
+  const filteredMissingProducts = useMemo(() => {
+    if (!results || selectedCategory === "all") return results?.missingDataProducts || [];
+    return results.missingDataProducts?.filter((product: any) => 
+      product.productType === selectedCategory
+    ) || [];
+  }, [results, selectedCategory]);
+
+  const filteredPartialProducts = useMemo(() => {
+    if (!results || selectedCategory === "all") return results?.partialDataProducts || [];
+    return results.partialDataProducts?.filter((product: any) => 
+      product.productType === selectedCategory
+    ) || [];
+  }, [results, selectedCategory]);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'complete':
@@ -107,7 +150,7 @@ export default function MupHealthCheckPage() {
             </div>
             <div>
               <Text as="p" variant="bodyMd" tone="subdued">Partial Data</Text>
-              <Text as="p" variant="headingLg" tone="warning">{results.productsWithPartialData}</Text>
+              <Text as="p" variant="headingLg">{results.productsWithPartialData}</Text>
             </div>
             <div>
               <Text as="p" variant="bodyMd" tone="subdued">Missing Data</Text>
@@ -138,8 +181,8 @@ export default function MupHealthCheckPage() {
               onChange={(value) => updateVariantUnits(variantId, value)}
               placeholder="Units per item"
               autoComplete="off"
-              step="0.1"
-              min="0"
+              step={0.1}
+              min={0}
             />
           </div>
           <Button
@@ -155,13 +198,29 @@ export default function MupHealthCheckPage() {
   };
 
   const renderMissingDataTable = () => {
-    if (!results || results.missingDataProducts.length === 0) return null;
+    if (!results || filteredMissingProducts.length === 0) return null;
 
     return (
       <Card>
         <BlockStack gap="400">
-          <Text as="h2" variant="headingMd">Products Missing Alcohol Unit Data</Text>
-          {results.missingDataProducts.map((product: any) => {
+          <InlineStack gap="400" align="space-between" blockAlign="center">
+            <Text as="h2" variant="headingMd">Products Missing Alcohol Unit Data</Text>
+            {categories.length > 0 && (
+              <div style={{ width: '250px' }}>
+                <Select
+                  label=""
+                  labelHidden
+                  options={[
+                    { label: 'All Categories', value: 'all' },
+                    ...categories.map(category => ({ label: category, value: category }))
+                  ]}
+                  value={selectedCategory}
+                  onChange={setSelectedCategory}
+                />
+              </div>
+            )}
+          </InlineStack>
+          {filteredMissingProducts.map((product: any) => {
             const isExpanded = expandedProducts.has(product.productId);
             return (
               <div key={product.productId} style={{ borderBottom: '1px solid #e1e3e5', paddingBottom: '1rem' }}>
@@ -191,9 +250,9 @@ export default function MupHealthCheckPage() {
   };
 
   const renderPartialDataTable = () => {
-    if (!results || results.partialDataProducts.length === 0) return null;
+    if (!results || filteredPartialProducts.length === 0) return null;
 
-    const rows = results.partialDataProducts.map((product: any) => [
+    const rows = filteredPartialProducts.map((product: any) => [
       product.productTitle,
       product.productType || '-',
       product.variants.length,
@@ -204,7 +263,23 @@ export default function MupHealthCheckPage() {
     return (
       <Card>
         <BlockStack gap="400">
-          <Text as="h2" variant="headingMd">Products With Partial Data</Text>
+          <InlineStack gap="400" align="space-between" blockAlign="center">
+            <Text as="h2" variant="headingMd">Products With Partial Data</Text>
+            {categories.length > 0 && (
+              <div style={{ width: '250px' }}>
+                <Select
+                  label=""
+                  labelHidden
+                  options={[
+                    { label: 'All Categories', value: 'all' },
+                    ...categories.map(category => ({ label: category, value: category }))
+                  ]}
+                  value={selectedCategory}
+                  onChange={setSelectedCategory}
+                />
+              </div>
+            )}
+          </InlineStack>
           <DataTable
             columnContentTypes={['text', 'text', 'numeric', 'text', 'text']}
             headings={['Product', 'Type', 'Variants', 'Status', 'Issues']}

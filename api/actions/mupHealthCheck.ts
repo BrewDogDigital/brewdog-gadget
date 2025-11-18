@@ -36,7 +36,16 @@ export const run = async ({ params, connections, logger }: any) => {
               status
               productType
               tags
-              variants(first: 10) {
+              collections(first: 100) {
+                edges {
+                  node {
+                    id
+                    title
+                    handle
+                  }
+                }
+              }
+              variants(first: 100) {
                 edges {
                   node {
                     id
@@ -83,6 +92,7 @@ export const run = async ({ params, connections, logger }: any) => {
       productsWithPartialData: 0,
       missingDataProducts: [],
       partialDataProducts: [],
+      allProductTypes: new Set<string>(), // Track all product types found
       pageInfo: products.pageInfo,
     };
 
@@ -90,6 +100,11 @@ export const run = async ({ params, connections, logger }: any) => {
     for (const edge of products.edges) {
       const product = edge.node;
       const variants = product.variants.edges.map((v: any) => v.node);
+      
+      // Track all product types (categories) from all products scanned
+      if (product.productType && product.productType.trim() !== '') {
+        healthCheckResults.allProductTypes.add(product.productType);
+      }
       
       const productAnalysis = analyzeProduct(product, variants);
       
@@ -113,7 +128,10 @@ export const run = async ({ params, connections, logger }: any) => {
 
     return {
       success: true,
-      results: healthCheckResults,
+      results: {
+        ...healthCheckResults,
+        allProductTypes: Array.from(healthCheckResults.allProductTypes).sort(), // Convert Set to sorted array
+      },
     };
 
   } catch (error) {
@@ -126,11 +144,18 @@ export const run = async ({ params, connections, logger }: any) => {
  * Analyze a single product for MUP data completeness
  */
 function analyzeProduct(product: any, variants: any[]) {
+  const collections = product.collections?.edges?.map((edge: any) => ({
+    id: edge.node.id,
+    title: edge.node.title,
+    handle: edge.node.handle,
+  })) || [];
+  
   const analysis = {
     productId: product.id,
     productTitle: product.title,
     productHandle: product.handle,
     productType: product.productType,
+    collections: collections,
     status: 'complete' as 'complete' | 'missing' | 'partial',
     variants: [],
     issues: [],

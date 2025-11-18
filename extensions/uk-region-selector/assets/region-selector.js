@@ -574,10 +574,18 @@ async function checkForOverrideDiscount() {
   }
 
 // Fetch override codes from backend or use hardcoded list
+
 async function fetchOverrideCodes() {
+  if (window.location.href.includes('brewdog-dev') || window.location.href.includes('--development') || window.location.href.includes('localhost') || window.location.href.includes('127.0.0.1')) {
+    const url = 'https://brewdog--development.gadget.app/apps/mup/override-codes';
+  } else {
+    const url = 'https://brewdog.gadget.app/apps/mup/override-codes';
+  }
+  
   try {
     // Attempt to fetch from the Gadget app endpoint
-    const response = await fetch('https://brewdog--development.gadget.app/apps/mup/override-codes');
+    const response = await fetch(url);
+
     if (response.ok) {
       const data = await response.json();
       if (data.success && data.codes && data.codes.length > 0) {

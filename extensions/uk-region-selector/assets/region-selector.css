@@ -248,9 +248,40 @@
   min-width: 150px;
 }
 
+/* Mobile styles - hide text but keep flag icon */
 @media (max-width: 768px) {
-  .header .uk-region-selector {
-    display: none; /* Hide in header on mobile, modal will handle it */
+  /* Hide text label in the custom select trigger value, but keep flag icon */
+  .uk-region-custom-select__value > span:not(.fi):not(.uk-region-custom-select__placeholder) {
+    display: none;
+  }
+  
+  /* Also hide text in dropdown options on mobile (keeps dropdown compact) */
+  .uk-region-custom-select__option > span:not(.fi) {
+    display: none;
+  }
+  
+  /* Adjust trigger padding for mobile when text is hidden */
+  .uk-region-custom-select__trigger {
+    padding: 0.5rem 0.75rem;
+    min-width: auto;
+    width: auto;
+  }
+  
+  /* Ensure flag icon is visible and properly sized on mobile */
+  .uk-region-custom-select__value .fi {
+    display: inline-block !important;
+    font-size: 1.5em;
+    width: 1.75em;
+    height: 1.75em;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+    overflow: hidden;
+    margin: 0;
+  }
+  
+  /* Keep placeholder visible (it will show when no region selected) */
+  .uk-region-custom-select__placeholder {
+    display: inline-block;
   }
 }
 

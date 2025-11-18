@@ -73,8 +73,27 @@
   flex: 1;
 }
 
-.uk-region-custom-select__value .fi {
+/* Square flag icons - cropped to square then made circular */
+.uk-region-flag-square {
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  border: 1px solid #d1d5db;
+  display: inline-block;
+  overflow: hidden;
+  flex-shrink: 0;
+  /* Crop rectangular flag to square by fitting height and centering horizontally */
+  background-size: auto 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* Force square aspect ratio */
+  aspect-ratio: 1 / 1;
+}
+
+.uk-region-custom-select__value .uk-region-flag-square {
   font-size: 1.25em;
+  width: 1.5em;
+  height: 1.5em;
 }
 
 .uk-region-custom-select__placeholder {
@@ -132,9 +151,10 @@
   font-weight: 600;
 }
 
-.uk-region-custom-select__option .fi {
+.uk-region-custom-select__option .uk-region-flag-square {
   font-size: 1.5em;
-  flex-shrink: 0;
+  width: 1.75em;
+  height: 1.75em;
 }
 .uk-region-selector__label {
   font-size: 0.875rem;
@@ -294,6 +314,80 @@
     transform: translateY(0);
   }
 }
+
+@media (max-width: 992px) {
+  .uk-region-selector__wrapper .uk-region-custom-select__value .fi,
+  .uk-region-custom-select__option span {
+    display: none;
+  }
+
+  .uk-region-selector__wrapper .uk-region-custom-select__value span.fi,
+  .uk-region-custom-select__option span.fi {
+    display: inline-block;
+    font-size: 14px;
+    width: 1.25em;
+    height: 1.25em;
+  }
+
+  .uk-region-custom-select__arrow {
+    width: 10px;
+  }
+
+  .uk-region-custom-select__trigger {
+    margin-left: 6px;
+    margin-right: 6px;
+    padding: 5px;
+  }
+}
+
+/* Toast Notification Styles */
+.uk-region-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(117, 201, 225, 1);
+  color: #fff;
+  padding: 16px 24px;
+  border-radius: 0.5rem;
+  z-index: 10000;
+  display: inline-block;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 300px;
+  max-width: 500px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.uk-region-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.uk-region-toast__title { 
+    font-size: 16px;
+  font-weight: 600;
+  color: black;
+  display: block;
+}
+
+.uk-region-toast__description {
+  font-size: 16px;
+  color: black;
+}
+
+@media (max-width: 640px) {
+  .uk-region-toast {
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+    max-width: none;
+  }
+}
 </style>
 
 <div 
@@ -317,19 +411,19 @@
       
       <div class="uk-region-custom-select__dropdown" data-select-dropdown>
         <button type="button" class="uk-region-custom-select__option" data-value="england">
-          <span class="fi fi-gb-eng"></span>
+          <span class="fi fi-gb-eng uk-region-flag-square"></span>
           <span>England</span>
         </button>
         <button type="button" class="uk-region-custom-select__option" data-value="scotland">
-          <span class="fi fi-gb-sct"></span>
+          <span class="fi fi-gb-sct uk-region-flag-square"></span>
           <span>Scotland</span>
         </button>
         <button type="button" class="uk-region-custom-select__option" data-value="wales">
-          <span class="fi fi-gb-wls"></span>
+          <span class="fi fi-gb-wls uk-region-flag-square"></span>
           <span>Wales</span>
         </button>
         <button type="button" class="uk-region-custom-select__option" data-value="northern_ireland">
-          <span class="fi fi-gb-nir"></span>
+          <span class="fi fi-gb-nir uk-region-flag-square"></span>
           <span>Northern Ireland</span>
         </button>
       </div>
@@ -399,6 +493,12 @@
   </div>
 </div>
 
+<!-- Toast Notification -->
+<div id="uk-region-toast" class="uk-region-toast">
+  <span class="uk-region-toast__title"><strong>Scotland Selected</strong></span>
+  <span class="uk-region-toast__description">Orders may be subject to MUP restrictions and levies.</span>
+</div>
+
 <script>
 (function() {
   'use strict';
@@ -435,6 +535,20 @@
     document.cookie = `${name}=${value};${expires};path=/`;
   }
 
+  // Show toast notification for Scotland
+  function showScotlandToast() {
+    const toast = document.getElementById('uk-region-toast');
+    if (!toast) return;
+    
+    // Show toast
+    toast.classList.add('show');
+    
+    // Hide after 5 seconds
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 5000);
+  }
+
   async function setCartAttribute(region) {
     try {
       const response = await fetch('/cart/update.js', {
@@ -449,6 +563,12 @@
       });
       if (response.ok) {
         console.log('[Region Selector] Cart attribute updated:', region);
+        
+        // Show toast notification if Scotland is selected
+        if (region === 'scotland') {
+          showScotlandToast();
+        }
+        
         return await response.json();
       }
     } catch (error) {
@@ -559,10 +679,10 @@
     
     // Region data with labels and flags
     const regionData = {
-      'england': { label: 'England', flag: 'fi-gb-eng' },
-      'scotland': { label: 'Scotland', flag: 'fi-gb-sct' },
-      'wales': { label: 'Wales', flag: 'fi-gb-wls' },
-      'northern_ireland': { label: 'Northern Ireland', flag: 'fi-gb-nir' }
+      'england': { label: 'England', flag: 'fi-gb-eng', flagClass: 'uk-region-flag-square' },
+      'scotland': { label: 'Scotland', flag: 'fi-gb-sct', flagClass: 'uk-region-flag-square' },
+      'wales': { label: 'Wales', flag: 'fi-gb-wls', flagClass: 'uk-region-flag-square' },
+      'northern_ireland': { label: 'Northern Ireland', flag: 'fi-gb-nir', flagClass: 'uk-region-flag-square' }
     };
     
     // Custom select elements (will be initialized after injection)
@@ -575,7 +695,7 @@
       if (region && regionData[region]) {
         const data = regionData[region];
         valueDisplay.innerHTML = `
-          <span class="fi ${data.flag}"></span>
+          <span class="fi ${data.flag} ${data.flagClass}"></span>
           <span>${data.label}</span>
         `;
       } else {
@@ -668,33 +788,67 @@
       });
     }
 
-    // Auto-inject selector into specified element
-    const autoInjectSelector = "{{ block.settings.auto_inject_selector }}";
+    // Auto-inject selector into specified element (mobile/desktop aware)
+    const desktopSelector = "{{ block.settings.auto_inject_selector }}";
+    const mobileSelector = "{{ block.settings.mobile_inject_selector }}";
     const injectPosition = "{{ block.settings.inject_position | default: 'prepend' }}";
     
-    if (autoInjectSelector) {
-      console.log('[Region Selector] Auto-inject selector:', autoInjectSelector);
-      console.log('[Region Selector] Inject position:', injectPosition);
+    // Function to determine if we're on mobile
+    function isMobile() {
+      return window.innerWidth <= 768;
+    }
+    
+    // Function to get the appropriate selector based on screen size
+    function getTargetSelector() {
+      if (isMobile() && mobileSelector && mobileSelector.trim() !== '') {
+        return mobileSelector;
+      }
+      return desktopSelector;
+    }
+    
+    // Function to inject the selector
+    function injectSelector() {
+      const targetSelector = getTargetSelector();
       
-      const targetElement = document.querySelector(autoInjectSelector);
-      if (targetElement) {
-        console.log('[Region Selector] Target element found, injecting...');
+      if (targetSelector && targetSelector.trim() !== '') {
+        console.log('[Region Selector] Auto-inject selector:', targetSelector);
+        console.log('[Region Selector] Inject position:', injectPosition);
+        console.log('[Region Selector] Is mobile:', isMobile());
         
-        // Remove from current position
-        container.remove();
-        
-        // Inject at specified position
-        if (injectPosition === 'prepend') {
-          targetElement.prepend(container);
+        const targetElement = document.querySelector(targetSelector);
+        if (targetElement) {
+          console.log('[Region Selector] Target element found, injecting...');
+          
+          // Remove from current position if already injected
+          if (container.parentNode) {
+            container.remove();
+          }
+          
+          // Inject at specified position
+          if (injectPosition === 'prepend') {
+            targetElement.prepend(container);
+          } else {
+            targetElement.append(container);
+          }
+          
+          console.log('[Region Selector] Injected into:', targetSelector);
         } else {
-          targetElement.append(container);
+          console.warn('[Region Selector] Target element not found:', targetSelector);
         }
-        
-        console.log('[Region Selector] Injected into:', autoInjectSelector);
-      } else {
-        console.warn('[Region Selector] Target element not found:', autoInjectSelector);
       }
     }
+    
+    // Initial injection
+    injectSelector();
+    
+    // Re-inject on window resize to handle mobile/desktop switching
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        injectSelector();
+      }, 250);
+    });
 
     // Show selector
     container.style.display = 'flex';
@@ -824,9 +978,15 @@
     {
       "type": "text",
       "id": "auto_inject_selector",
-      "label": "Auto-inject CSS Selector",
-      "info": "e.g., .header__top, #site-header, .utility-bar - Where to inject the region selector",
+      "label": "Desktop CSS Selector",
+      "info": "e.g., .header__top, #site-header, .utility-bar - Where to inject the region selector on desktop",
       "default": "header"
+    },
+    {
+      "type": "text",
+      "id": "mobile_inject_selector",
+      "label": "Mobile CSS Selector (optional)",
+      "info": "e.g., .mobile-header, #mobile-nav, .header-mobile - Where to inject the region selector on mobile. Leave blank to use desktop selector on mobile."
     },
     {
       "type": "select",
