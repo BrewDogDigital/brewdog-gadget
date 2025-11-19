@@ -98,7 +98,7 @@ function MupCheckoutGuidance() {
   // If customer has Scottish address but hasn't selected Scotland, show critical warning
   if (hasScottishAddressMismatch) {
     return (
-      <Banner status="critical">
+      <Banner status="warning">
         <BlockStack spacing="base">
           <Heading level={2}>⚠️ Scottish Address Detected</Heading>
           
@@ -232,7 +232,7 @@ function MupCheckoutGuidance() {
       {/* Repair UI - Show when discount is applied in Scotland AND we detect alcoholic products (but NOT if override is active) */}
       {/* The validation function will actually block checkout if there's a MUP violation */}
       {hasDiscountApplied && !hasOverride && (hasAlcoholicProducts || hasProductLines) && (
-        <Banner status="critical">
+        <Banner status="warning">
           <BlockStack spacing="base">
             <Heading level={3}>Possible MUP Violation</Heading>
             
