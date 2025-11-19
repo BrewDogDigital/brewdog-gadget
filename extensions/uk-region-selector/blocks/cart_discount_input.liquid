@@ -486,57 +486,102 @@
   }
 
 
-function getActiveDiscount(cart) {
-  // 1. Cart-level discount codes (entire order)
-  if (cart.cart_level_discount_applications?.length > 0) {
-    return cart.cart_level_discount_applications[0].title;
-  }
+  // Get cart data from uwp-cart element
+  function getCartDataFromUwpCart() {
+    const uwpCartElement = document.querySelector('uwp-cart');
+    if (!uwpCartElement) {
+      console.log('[MUP Discount] uwp-cart element not found');
+      return null;
+    }
 
-  // 2. Line-level discount codes (product-specific)
-  for (const item of cart.items) {
-    if (item.discounts?.length > 0) {
-      return item.discounts[0].title; // e.g. "TEST"
+    const cartDataAttr = uwpCartElement.getAttribute('cart-data');
+    if (!cartDataAttr) {
+      console.log('[MUP Discount] cart-data attribute not found on uwp-cart');
+      return null;
+    }
+
+    try {
+      const cartData = JSON.parse(cartDataAttr);
+      console.log('[MUP Discount] Cart data from uwp-cart:', cartData);
+      return cartData;
+    } catch (error) {
+      console.error('[MUP Discount] Failed to parse cart-data:', error);
+      return null;
     }
   }
 
-  return null;
-}
+  function getActiveDiscount(cart) {
+    // 1. Check discount_codes array
+    if (cart.discount_codes && cart.discount_codes.length > 0) {
+      return cart.discount_codes[0].code || cart.discount_codes[0];
+    }
 
+    // 2. Cart-level discount codes (entire order)
+    if (cart.cart_level_discount_applications?.length > 0) {
+      return cart.cart_level_discount_applications[0].title;
+    }
+
+    // 3. Line-level discount codes (product-specific)
+    for (const item of cart.items) {
+      if (item.discounts?.length > 0) {
+        return item.discounts[0].title;
+      }
+    }
+
+    return null;
+  }
 
   // Check for existing discount on page load
   async function checkExistingDiscount() {
-  const cart = await fetch('/cart.js').then(r => r.json());
+    // Try to get cart data from uwp-cart element first
+    let cart = getCartDataFromUwpCart();
+    
+    // Fallback to API if uwp-cart not available
+    if (!cart) {
+      console.log('[MUP Discount] Falling back to /cart.js API');
+      cart = await fetch('/cart.js').then(r => r.json());
+    }
 
-  const code = getActiveDiscount(cart);
+    // Check if discount is actually active
+    const hasActiveDiscount = (cart.total_discount && cart.total_discount > 0) ||
+                              (cart.discount_codes && cart.discount_codes.length > 0) ||
+                              (cart.cart_level_discount_applications && cart.cart_level_discount_applications.length > 0);
 
-  if (code) {
-    appliedCodeEl.textContent = `Code: ${code}`;
+    const code = hasActiveDiscount ? getActiveDiscount(cart) : null;
 
-    const savings = (cart.total_discount / 100).toFixed(2);
-    appliedSavingsEl.textContent =
-      cart.total_discount > 0
-        ? `You're saving £${savings}`
-        : 'Discount applied';
+    if (hasActiveDiscount && code) {
+      appliedCodeEl.textContent = `Code: ${code.toUpperCase()}`;
 
-    appliedEl.style.display = 'flex';
-    form.style.display = 'none';
+      const savings = (cart.total_discount / 100).toFixed(2);
+      appliedSavingsEl.textContent =
+        cart.total_discount > 0
+          ? `You're saving £${savings}`
+          : 'Discount applied';
 
-    await checkAndSetOverride(code);
+      appliedEl.style.display = 'flex';
+      form.style.display = 'none';
 
-  } else {
-    appliedEl.style.display = 'none';
-    form.style.display = 'flex';
+      await checkAndSetOverride(code);
 
-    // clear override
-    await fetch('/cart/update.js', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        attributes: { mup_override: '' }
-      })
-    });
+    } else {
+      appliedEl.style.display = 'none';
+      form.style.display = 'flex';
+
+      // Clear discount_code and override attributes since discount was removed
+      await fetch('/cart/update.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attributes: {
+            discount_code: '',
+            mup_override: '',
+            _discount_applied: ''
+          }
+        })
+      });
+      console.log('[MUP Discount] Cleared discount attributes - no active discount found');
+    }
   }
-}
 
 
   // Form submit handler

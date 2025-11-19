@@ -316,9 +316,14 @@
 }
 
 @media (max-width: 992px) {
-  .uk-region-selector__wrapper .uk-region-custom-select__value .fi,
+  .uk-region-custom-select__trigger span + span,
   .uk-region-custom-select__option span {
     display: none;
+  }
+
+  .uk-region-custom-select__option {
+    padding: 5px;
+    justify-content: center;
   }
 
   .uk-region-selector__wrapper .uk-region-custom-select__value span.fi,
@@ -377,6 +382,32 @@
 .uk-region-toast__description {
   font-size: 16px;
   color: black;
+}
+
+.uk-region-toast__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  z-index: 1;
+}
+
+.uk-region-toast__close:hover {
+  opacity: 1;
+}
+
+.uk-region-toast__close svg {
+  width: 16px;
+  height: 16px;
 }
 
 @media (max-width: 640px) {
@@ -495,6 +526,11 @@
 
 <!-- Toast Notification -->
 <div id="uk-region-toast" class="uk-region-toast">
+  <button class="uk-region-toast__close" aria-label="Close" data-toast-close>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
   <span class="uk-region-toast__title"><strong>Scotland Selected</strong></span>
   <span class="uk-region-toast__description">Orders may be subject to MUP restrictions and levies.</span>
 </div>
@@ -536,17 +572,41 @@
   }
 
   // Show toast notification for Scotland
+  let toastTimeout = null;
+  
   function showScotlandToast() {
     const toast = document.getElementById('uk-region-toast');
     if (!toast) return;
+    
+    // Clear any existing timeout
+    if (toastTimeout) {
+      clearTimeout(toastTimeout);
+      toastTimeout = null;
+    }
     
     // Show toast
     toast.classList.add('show');
     
     // Hide after 5 seconds
-    setTimeout(() => {
+    toastTimeout = setTimeout(() => {
       toast.classList.remove('show');
+      toastTimeout = null;
     }, 5000);
+  }
+  
+  // Close toast function
+  function closeToast() {
+    const toast = document.getElementById('uk-region-toast');
+    if (!toast) return;
+    
+    // Clear timeout if it exists
+    if (toastTimeout) {
+      clearTimeout(toastTimeout);
+      toastTimeout = null;
+    }
+    
+    // Hide toast immediately
+    toast.classList.remove('show');
   }
 
   async function setCartAttribute(region) {
@@ -959,6 +1019,12 @@
         document.body.style.overflow = '';
       });
     });
+    
+    // Handle toast close button
+    const toastCloseBtn = document.querySelector('[data-toast-close]');
+    if (toastCloseBtn) {
+      toastCloseBtn.addEventListener('click', closeToast);
+    }
   }
 
   // Wait for DOM to be ready
