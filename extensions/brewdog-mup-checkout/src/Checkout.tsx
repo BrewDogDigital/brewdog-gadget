@@ -334,11 +334,6 @@ function MupCheckoutGuidance() {
           <Text size="small">
             <Text emphasis="bold">Note:</Text> Discount codes that reduce prices below the minimum unit price will be automatically blocked at checkout.
           </Text>
-          <Text size="small">
-            <Link url="https://www.mygov.scot/minimum-unit-pricing-alcohol" external>
-              {translate('learn_more')}
-            </Link>
-          </Text>
         </BlockStack>
       </Banner>
       
