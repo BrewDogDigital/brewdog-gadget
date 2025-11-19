@@ -50,6 +50,10 @@ export function run(input: RunInput): FunctionRunResult {
   const isDoubleDiscount = input.shop.metafield?.value === 'true';
   console.log('isDoubleDiscount', isDoubleDiscount);
 
+  // Check for efptwentyforall metafield - if true, use 20% discount for all
+  const isTwentyForAll = input.shop.efptwentyforall?.value === 'true';
+  console.log('isTwentyForAll', isTwentyForAll);
+
   let discountValue = discountTag; // Now correctly stores the highest discount
 
   // Check if the user is a test user
@@ -63,9 +67,11 @@ export function run(input: RunInput): FunctionRunResult {
 
   const discount = staffTag
     ? 30
-    : isDoubleDiscount
-      ? discountValue * 2
-      : discountValue;
+    : isTwentyForAll
+      ? 20
+      : isDoubleDiscount
+        ? discountValue * 2
+        : discountValue;
 
   const targets = input.cart.lines
     .filter((line) => !line.cost.compareAtAmountPerQuantity)

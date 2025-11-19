@@ -33,5 +33,8 @@ query RunInput {
     metafield(namespace: "brewdog", key: "efp_double_discount") {
       value
     }
+    efptwentyforall: metafield(namespace: "brewdog", key: "efptwentyforall") {
+      value
+    }
   }
 }
