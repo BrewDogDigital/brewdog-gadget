@@ -350,8 +350,8 @@
   position: fixed;
   top: 20px;
   right: 20px;
-  background-color: rgba(117, 201, 225, 1);
-  color: #fff;
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
   padding: 16px 24px;
   border-radius: 0.5rem;
   z-index: 10000;
@@ -375,13 +375,13 @@
 .uk-region-toast__title { 
     font-size: 16px;
   font-weight: 600;
-  color: black;
+  color: #78350f;
   display: block;
 }
 
 .uk-region-toast__description {
   font-size: 16px;
-  color: black;
+  color: #78350f;
 }
 
 .uk-region-toast__close {
@@ -587,11 +587,11 @@
     // Show toast
     toast.classList.add('show');
     
-    // Hide after 5 seconds
+    // Hide after 20 seconds
     toastTimeout = setTimeout(() => {
       toast.classList.remove('show');
       toastTimeout = null;
-    }, 5000);
+    }, 20000);
   }
   
   // Close toast function

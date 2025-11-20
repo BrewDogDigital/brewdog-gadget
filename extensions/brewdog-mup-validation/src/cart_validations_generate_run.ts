@@ -20,7 +20,7 @@ import type {
 
 /**
  * Check if a postcode is Scottish
- * Scottish postcodes start with: AB, DD, DG, EH, FK, G (Glasgow G1-G9, not GU), HS, IV, KA, KW, KY, ML, PA, PH, TD, ZE
+ * Scottish postcodes start with: AB, DD, DG, EH, FK, G, HS, IV, KA, KW, KY, ML, PA, PH, TD, ZE
  */
 function isScottishPostcode(postcode: string | null | undefined): boolean {
   if (!postcode) {
@@ -31,35 +31,16 @@ function isScottishPostcode(postcode: string | null | undefined): boolean {
   const normalized = postcode.trim().toUpperCase().replace(/\s+/g, '');
   console.log(`   [isScottishPostcode] Original: "${postcode}", Normalized: "${normalized}"`);
   
-  // Scottish postcode prefixes (excluding G to handle Glasgow vs Guildford separately)
   const scottishPrefixes = [
-    'AB', 'DD', 'DG', 'EH', 'FK',
+    'AB', 'DD', 'DG', 'EH', 'FK', 'G', 
     'HS', 'IV', 'KA', 'KW', 'KY', 'ML', 
     'PA', 'PH', 'TD', 'ZE'
   ];
   
-  // Check standard prefixes
-  if (scottishPrefixes.some(prefix => normalized.startsWith(prefix))) {
-    console.log(`   [isScottishPostcode] Match result: true (standard prefix)`);
-    return true;
-  }
+  const isScottish = scottishPrefixes.some(prefix => normalized.startsWith(prefix));
+  console.log(`   [isScottishPostcode] Match result: ${isScottish}`);
   
-  // Special handling for Glasgow (G1-G9) - exclude Guildford (GU), Gloucester (GL), and Guernsey (GY)
-  // Glasgow postcodes: G followed by a digit (G1, G2, G3, etc.)
-  // Guildford postcodes: GU (England)
-  // Gloucester postcodes: GL (England)
-  // Guernsey postcodes: GY (Channel Islands)
-  if (normalized.startsWith('G') && !normalized.startsWith('GU') && !normalized.startsWith('GL') && !normalized.startsWith('GY')) {
-    // Check if second character is a digit (G1-G9 are Glasgow)
-    const secondChar = normalized.charAt(1);
-    if (secondChar && /[0-9]/.test(secondChar)) {
-      console.log(`   [isScottishPostcode] Match result: true (Glasgow postcode)`);
-      return true;
-    }
-  }
-  
-  console.log(`   [isScottishPostcode] Match result: false`);
-  return false;
+  return isScottish;
 }
 export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInput): CartValidationsGenerateRunResult {
   console.log("🔒 MUP Validation Function CALLED");
@@ -86,6 +67,17 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     console.log("⚠️ MUP enforcement BYPASSED due to override cart attribute");
     return { operations: [{ validationAdd: { errors: [] } }] };
   }
+
+  // Check if MUP enforcement is enabled FIRST - if disabled, skip all validation
+  const enforcementEnabled = (input.shop as any)?.enforcementEnabled?.value;
+  console.log("⚙️ MUP enforcement enabled:", enforcementEnabled);
+  
+  if (enforcementEnabled === 'false') {
+    console.log("⏭️ MUP enforcement is disabled in settings - skipping all MUP validation");
+    return { operations: [{ validationAdd: { errors: [] } }] };
+  }
+
+  console.log("✅ MUP enforcement is enabled - proceeding with validation");
 
   // Check if customer is in Scotland
   const ukRegionAttribute = (input.cart as any).attribute;
@@ -156,18 +148,7 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     return { operations: [{ validationAdd: { errors: [] } }] };
   }
 
-  console.log("🏴󠁧󠁢󠁳󠁣󠁴󠁿 Customer is in Scotland - checking if MUP enforcement is enabled");
-  
-  // Check if MUP enforcement is enabled
-  const enforcementEnabled = (input.shop as any)?.enforcementEnabled?.value;
-  console.log("⚙️ MUP enforcement enabled:", enforcementEnabled);
-  
-  if (enforcementEnabled === 'false') {
-    console.log("⏭️ MUP enforcement is disabled in settings");
-    return { operations: [{ validationAdd: { errors: [] } }] };
-  }
-
-  console.log("✅ MUP enforcement is enabled - validating MUP compliance");
+  console.log("🏴󠁧󠁢󠁳󠁣󠁴󠁿 Customer is in Scotland - validating MUP compliance");
   
   // Get minimum unit price from shop
   const minimumUnitPrice = parseFloat((input.shop as any)?.minimumUnitPrice?.value || "0.65");

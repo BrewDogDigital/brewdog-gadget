@@ -8,7 +8,6 @@ import {
   Divider,
   List,
   ListItem,
-  Link,
   Button,
   useCartLines,
   useAttributeValues,
@@ -98,7 +97,7 @@ function MupCheckoutGuidance() {
   // If customer has Scottish address but hasn't selected Scotland, show critical warning
   if (hasScottishAddressMismatch) {
     return (
-      <Banner status="critical">
+      <Banner status="warning">
         <BlockStack spacing="base">
           <Heading level={2}>⚠️ Scottish Address Detected</Heading>
           
@@ -158,20 +157,6 @@ function MupCheckoutGuidance() {
   // Check if customer has applied a discount code
   const hasDiscountApplied = discountCodes.length > 0;
   
-  // If customer is in Scotland but there are no levy lines and we can detect alcoholic products,
-  // it means enforcement is disabled - don't show MUP UI UNLESS there's a discount applied
-  // (in which case we need to show the discount warning)
-  if (hasAlcoholicProducts && levyLines.length === 0 && !hasDiscountApplied) {
-    console.log('⏭️ MUP enforcement appears to be disabled (Scotland customer with alcoholic products but no levy lines)');
-    return null;
-  }
-
-  // If no alcoholic products detected, also don't show MUP UI UNLESS there's a discount applied
-  if (!hasAlcoholicProducts && levyLines.length === 0 && !hasDiscountApplied) {
-    console.log('⏭️ No alcoholic products detected - not showing MUP UI');
-    return null;
-  }
-
   console.log('✅ Customer is in Scotland - showing MUP UI');
 
   // Calculate total levy amount
@@ -232,7 +217,7 @@ function MupCheckoutGuidance() {
       {/* Repair UI - Show when discount is applied in Scotland AND we detect alcoholic products (but NOT if override is active) */}
       {/* The validation function will actually block checkout if there's a MUP violation */}
       {hasDiscountApplied && !hasOverride && (hasAlcoholicProducts || hasProductLines) && (
-        <Banner status="critical">
+        <Banner status="warning">
           <BlockStack spacing="base">
             <Heading level={3}>Possible MUP Violation</Heading>
             
@@ -283,7 +268,7 @@ function MupCheckoutGuidance() {
         </Banner>
       )}
 
-      <Banner status="info">
+      <Banner status="warning">
         <BlockStack spacing="tight">
           <Text emphasis="bold">
             {translate('scotland_notice')}
@@ -329,7 +314,7 @@ function MupCheckoutGuidance() {
       )}
 
       {/* Info about validation - always show for Scotland customers */}
-      <Banner status="info">
+      <Banner status="warning">
         <BlockStack spacing="tight">
           <Text size="small">
             <Text emphasis="bold">Note:</Text> Discount codes that reduce prices below the minimum unit price will be automatically blocked at checkout.
