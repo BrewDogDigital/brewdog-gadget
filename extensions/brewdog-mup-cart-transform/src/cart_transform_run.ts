@@ -18,7 +18,7 @@ function getLevyVariantId(shopMetafields: Metafield[]): string | null {
   console.log("🔍 Looking for MUP levy product metafield...");
 
   const levyProductMetafield = shopMetafields.find(
-    mf => mf.namespace === 'custom' && mf.key === 'mup_levy_product'
+    (mf: any) => mf.namespace === 'custom' && mf.key === 'mup_levy_product'
   );
 
   if (!levyProductMetafield?.value) {
@@ -57,7 +57,7 @@ function getMinimumUnitPrice(shopMetafields: Metafield[]): number {
   console.log("🔍 Looking for minimum unit price metafield...");
 
   const minimumUnitPriceMetafield = shopMetafields.find(
-    mf => mf.namespace === 'custom' && mf.key === 'minimum_unit_price'
+    (mf: any) => mf.namespace === 'custom' && mf.key === 'minimum_unit_price'
   );
 
   if (minimumUnitPriceMetafield?.value) {
@@ -75,7 +75,7 @@ function getMinimumUnitPrice(shopMetafields: Metafield[]): number {
  */
 function getDebugEnabled(shopMetafields: Metafield[]): boolean {
   const debugMetafield = shopMetafields.find(
-    mf => mf.namespace === 'custom' && mf.key === 'mup_debug'
+    (mf: any) => mf.namespace === 'custom' && mf.key === 'mup_debug'
   );
   return debugMetafield?.value === 'true' || debugMetafield?.value === '1';
 }
@@ -214,7 +214,6 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
   console.log("🚀 Cart Transform Function CALLED!");
   console.log("🔍 Input received:", {
     cartLinesCount: input.cart?.lines?.length ?? 0,
-    shopId: input.shop?.id ?? null,
   });
 
   // Check if customer is in Scotland via cart attribute
@@ -248,7 +247,7 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
 
   // Assemble MUP configuration from shop metafields (aliased in query)
   const shop = input.shop;
-  const shopMetafields: Metafield[] = [];
+  const shopMetafields: any[] = [];
   
   if (shop?.levyProduct) {
     shopMetafields.push({
@@ -256,7 +255,6 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
       key: 'mup_levy_product',
       value: shop.levyProduct.value ?? '',
       type: shop.levyProduct.type ?? '',
-      jsonValue: undefined
     });
   }
   if (shop?.minimumUnitPrice) {
@@ -265,7 +263,6 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
       key: 'minimum_unit_price',
       value: shop.minimumUnitPrice.value ?? '',
       type: shop.minimumUnitPrice.type ?? '',
-      jsonValue: undefined
     });
   }
   if (shop?.debugFlag) {
@@ -274,12 +271,11 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
       key: 'mup_debug',
       value: shop.debugFlag.value ?? '',
       type: shop.debugFlag.type ?? '',
-      jsonValue: undefined
     });
   }
 
   console.log("🏪 Shop metafields assembled:", shopMetafields.length);
-  console.log("🏪 Shop metafields:", shopMetafields.map(mf => ({
+  console.log("🏪 Shop metafields:", shopMetafields.map((mf: any) => ({
     key: mf.key,
     value: mf.value,
     type: mf.type,
@@ -306,7 +302,121 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
     ? levyVariantId 
     : `gid://shopify/ProductVariant/${levyVariantId}`;
 
-  // Process each cart line and add levy child lines where needed
+  // First, find all MUP levy lines and adjust their prices based on their parent lines
+  const levyLines: Array<{ line: CartLine; parentLineId: string }> = [];
+  const parentLines: Map<string, CartLine> = new Map();
+
+  // Map variant IDs to cart lines for parent lookup
+  const variantToLineMap: Map<string, CartLine> = new Map();
+  
+  // Separate levy lines from parent lines
+  for (let i = 0; i < input.cart.lines.length; i++) {
+    const line = input.cart.lines[i];
+    
+    // Check if this is a MUP levy line using aliased attribute fields
+    const lineWithAttrs = line as any;
+    const mupAttribute = lineWithAttrs.mupAttribute;
+    const parentLineIdAttr = lineWithAttrs.parentLineIdAttribute;
+    
+    console.log(`🔍 Line ${i + 1}: Checking attributes`, {
+      lineId: line.id,
+      mupAttribute: mupAttribute?.value,
+      parentLineIdAttribute: parentLineIdAttr?.value,
+      merchandiseType: line.merchandise.__typename
+    });
+    
+    if (mupAttribute?.value === 'true' && parentLineIdAttr?.value) {
+      console.log(`✅ Found MUP levy line: ${line.id}, parent variant: ${parentLineIdAttr.value}`);
+      levyLines.push({
+        line: line as CartLine,
+        parentLineId: parentLineIdAttr.value,
+      });
+    } else if (line.merchandise.__typename === "ProductVariant") {
+      const productVariant = line.merchandise as ProductVariant;
+      // Extract numeric variant ID from GID
+      const variantId = productVariant.id.split('/').pop() || '';
+      
+      console.log(`📦 Storing parent line: ${line.id}, variant: ${variantId}`);
+      parentLines.set(line.id, line as CartLine);
+      variantToLineMap.set(variantId, line as CartLine);
+    }
+  }
+  
+  console.log(`📊 Found ${levyLines.length} levy lines and ${parentLines.size} parent lines`);
+
+  // Process levy lines and adjust their prices based on parent
+  console.log(`🔄 Processing ${levyLines.length} levy lines...`);
+  for (const { line: levyLine, parentLineId } of levyLines) {
+    console.log(`🔍 Processing levy line ${levyLine.id}, looking for parent variant ${parentLineId}`);
+    console.log(`📋 Available variant IDs:`, Array.from(variantToLineMap.keys()));
+    
+    // Look up parent line by variant ID
+    const parentLine = variantToLineMap.get(parentLineId);
+    
+    if (!parentLine) {
+      console.log(`⚠️ Parent line with variant ${parentLineId} not found for levy line ${levyLine.id}`);
+      console.log(`⚠️ This levy line will not have its price adjusted`);
+      continue;
+    }
+    
+    console.log(`✅ Found parent line for variant ${parentLineId}: ${parentLine.id}`);
+
+    const productVariant = parentLine.merchandise as ProductVariant;
+    const unitsPerItem = calculateUnitsPerItem(productVariant.metafield);
+    
+    if (unitsPerItem <= 0) {
+      console.log(`⏭️ Parent line ${parentLineId} has no alcohol units, removing levy`);
+      continue;
+    }
+
+    const currentPricePerItem = parseFloat(parentLine.cost.amountPerQuantity.amount);
+    const mupFloorPerItem = unitsPerItem * minimumUnitPrice;
+
+    if (currentPricePerItem < mupFloorPerItem) {
+      const levyPerItem = mupFloorPerItem - currentPricePerItem;
+      const roundedLevyPerItem = roundUpToPenny(levyPerItem);
+      
+      console.log(`💰 Adjusting levy price for line ${levyLine.id}:`, {
+        parentPrice: currentPricePerItem,
+        mupFloor: mupFloorPerItem,
+        levyPerItem: roundedLevyPerItem,
+      });
+
+      // Update the levy line price
+      const operation = {
+        update: {
+          cartLineId: levyLine.id,
+          price: {
+            adjustment: {
+              fixedPricePerUnit: {
+                amount: roundedLevyPerItem.toString(),
+              },
+            },
+          },
+        },
+      };
+
+      operations.push(operation);
+    } else {
+      console.log(`✅ Parent line ${parentLineId} now meets MUP, levy should be removed`);
+      // Note: We can't remove lines from cart transform, but the price can be set to 0
+      const operation = {
+        update: {
+          cartLineId: levyLine.id,
+          price: {
+            adjustment: {
+              fixedPricePerUnit: {
+                amount: "0.00",
+              },
+            },
+          },
+        },
+      };
+      operations.push(operation);
+    }
+  }
+
+  // Now process parent lines that don't have levy lines yet
   for (let i = 0; i < input.cart.lines.length; i++) {
     const line = input.cart.lines[i];
     console.log(`📦 Processing line ${i + 1}/${input.cart.lines.length}:`, {
@@ -321,28 +431,18 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
       continue;
     }
 
-    // Skip if this line is already a MUP levy (check attribute)
-    const mupAttribute = (line as any).attribute;
-    if (mupAttribute?.value === "true") {
+    // Skip if this line is already a MUP levy (check aliased attribute)
+    const lineWithAttrs = line as any;
+    const mupAttribute = lineWithAttrs.mupAttribute;
+    if (mupAttribute?.value === 'true') {
       console.log("⏭️ Skipping existing MUP levy line");
       continue;
     }
 
-    // Skip if this line has already been processed by our transform
-    const originalPriceAttribute = (line as any).originalPriceAttribute;
-    if (originalPriceAttribute?.value) {
-      console.log("⏭️ Skipping already-transformed line (has original_price attribute)");
-      continue;
-    }
-
-    // Additional check: skip if this line has any MUP-related attributes
-    const hasMupAttributes = line.attributes?.some((attr: any) => 
-      attr.key === 'mup' || 
-      attr.key === 'mup_levy_per_item' || 
-      attr.key === 'parent_line_id'
-    );
-    if (hasMupAttributes) {
-      console.log("⏭️ Skipping line with MUP attributes (already processed)");
+    // Check if this line already has a levy line
+    const hasLevyLine = levyLines.some(({ parentLineId }) => parentLineId === line.id);
+    if (hasLevyLine) {
+      console.log("⏭️ Line already has a levy line, skipping");
       continue;
     }
 
@@ -354,7 +454,6 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
 
     const unitsPerItem = calculateUnitsPerItem(productVariant.metafield);
     console.log("📊 Units per item:", unitsPerItem);
-
 
     if (unitsPerItem <= 0) {
       console.log("⏭️ Skipping product with no alcohol units");
@@ -374,68 +473,12 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
       console.log("⚡ Levy needed per item:", levyPerItem);
       console.log("💰 Rounded levy per item:", roundedLevyPerItem);
       console.log("🔢 Line quantity:", line.quantity);
-      console.log("📌 Creating levy child line (quantity will match parent)");
+      console.log("📌 Note: Levy variant should be added as separate cart item (not via expand)");
 
-      const operation = {
-        expand: {
-          cartLineId: line.id,
-          expandedCartItems: [
-            // First: Keep the original product at its original price
-            {
-              merchandiseId: productVariant.id,
-              quantity: 1,
-              price: {
-                adjustment: {
-                  fixedPricePerUnit: {
-                    amount: originalPricePerItem.toString(),
-                  },
-                },
-              },
-              attributes: [
-                {
-                  key: "original_price",
-                  value: originalPricePerItem.toString(),
-                },
-              ],
-            },
-            // Second: Add the levy as a separate child line
-            {
-              merchandiseId: fullVariantId,
-              quantity: 1,
-              price: {
-                adjustment: {
-                  fixedPricePerUnit: {
-                    amount: roundedLevyPerItem.toString(),
-                  },
-                },
-              },
-              attributes: [
-                {
-                  key: "mup",
-                  value: "true",
-                },
-                {
-                  key: "mup_levy_per_item",
-                  value: roundedLevyPerItem.toString(),
-                },
-                {
-                  key: "parent_line_id",
-                  value: line.id,
-                },
-                // These attributes are required for validation function to recalculate levy
-                { key: "mup_total_units", value: unitsPerItem.toString() },
-                { key: "mup_minimum_unit_price", value: minimumUnitPrice.toString() },
-                ...(debugEnabled ? [
-                  { key: "mup_debug", value: "true" },
-                ] : []),
-              ],
-            },
-          ],
-        },
-      };
-
-      operations.push(operation);
-      console.log("✅ Levy operation created for line:", line.id);
+      // Note: Cart transforms can't add new lines, so we can't add the levy here
+      // The levy should be added via the shopifyCartLineItem create action or a webhook
+      // For now, we'll log that a levy is needed
+      console.log("⚠️ Cart transform cannot add new lines. Levy should be added via create action or webhook.");
     } else {
       console.log("✅ Product meets MUP requirements, no levy needed");
     }

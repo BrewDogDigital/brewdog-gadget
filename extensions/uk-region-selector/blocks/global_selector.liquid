@@ -401,6 +401,12 @@
   z-index: 1;
 }
 
+[id="item-{{ shop.metafields.custom.mup_levy_product.value | split: '/' | last }}"],
+[href="/products/mup-levy?variant={{ shop.metafields.custom.mup_levy_product.value | split: '/' | last }}"],
+[href="/products/mup-levy?variant={{ shop.metafields.custom.mup_levy_product.value | split: '/' | last }}"] + .minicart__item-info  {
+  display: none;
+}
+
 .uk-region-toast__close:hover {
   opacity: 1;
 }
@@ -1085,3 +1091,6 @@
   ]
 }
 {% endschema %}
+
+
+{{ 'mup-levy-handler.js' | asset_url | script_tag }}
