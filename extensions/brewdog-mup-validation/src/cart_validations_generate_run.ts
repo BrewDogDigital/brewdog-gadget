@@ -68,17 +68,6 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     return { operations: [{ validationAdd: { errors: [] } }] };
   }
 
-  // Check if MUP enforcement is enabled FIRST - if disabled, skip all validation
-  const enforcementEnabled = (input.shop as any)?.enforcementEnabled?.value;
-  console.log("⚙️ MUP enforcement enabled:", enforcementEnabled);
-  
-  if (enforcementEnabled === 'false') {
-    console.log("⏭️ MUP enforcement is disabled in settings - skipping all MUP validation");
-    return { operations: [{ validationAdd: { errors: [] } }] };
-  }
-
-  console.log("✅ MUP enforcement is enabled - proceeding with validation");
-
   // Check if customer is in Scotland
   const ukRegionAttribute = (input.cart as any).attribute;
   const ukRegion = ukRegionAttribute?.value;
@@ -202,10 +191,16 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     // If total is 0, price per item is 0 (100% discount)
     const pricePerItem = quantity > 0 ? totalAmount / quantity : amountPerQuantity;
     
+    // Calculate base price (without discounts) to detect if discounts are applied
+    const basePricePerItem = amountPerQuantity;
+    const hasDiscount = totalAmount < (basePricePerItem * quantity);
+    
     console.log("  - Total amount for line:", totalAmount);
-    console.log("  - Amount per quantity (may not reflect discounts):", amountPerQuantity);
+    console.log("  - Amount per quantity (base price):", amountPerQuantity);
     console.log("  - Quantity:", quantity);
     console.log("  - Calculated price per item (from total/quantity):", pricePerItem);
+    console.log("  - Base price per item:", basePricePerItem);
+    console.log("  - Has discount applied:", hasDiscount);
     console.log("  ℹ️  NOTE: Using totalAmount/quantity to ensure discounts are included");
     
     // Calculate MUP floor (in pounds)
@@ -213,15 +208,15 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     console.log("  - MUP floor (pounds):", mupFloor);
     console.log("  - Current price per item:", pricePerItem);
     
-    // Block discounts that reduce price below MUP floor
-    // The validation should prevent discounts from violating MUP, not add a levy
+    // Only block if discounts are applied AND price is below MUP floor
+    // If no discount is applied and price is below MUP floor, let it pass so cart transform can add levy
     if (pricePerItem < 0) {
       console.log("  ❌ PRICE IS NEGATIVE - invalid state!");
       errors.push({
         message: `Invalid pricing detected. Please refresh and try again.`,
         target: "$.checkout",
       });
-    } else if (pricePerItem < mupFloor) {
+    } else if (hasDiscount && pricePerItem < mupFloor) {
       console.log("  ❌ PRICE BELOW MUP FLOOR - discount violates MUP!");
       console.log("     Current price: £" + pricePerItem.toFixed(2));
       console.log("     Required minimum: £" + mupFloor.toFixed(2));
@@ -231,6 +226,11 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
         message: `Discounts cannot reduce the price below the Minimum Unit Pricing requirement. Current price: £${pricePerItem.toFixed(2)}, Minimum required: £${mupFloor.toFixed(2)}. Please remove or adjust your discounts.`,
         target: "$.checkout",
       });
+    } else if (!hasDiscount && pricePerItem < mupFloor) {
+      console.log("  ⚠️  Price below MUP floor but no discount applied - allowing cart transform to add levy");
+      console.log("     Current price: £" + pricePerItem.toFixed(2));
+      console.log("     Required minimum: £" + mupFloor.toFixed(2));
+      console.log("     Cart transform will add levy to meet MUP requirements");
     } else {
       console.log("  ✅ Price meets MUP requirements");
     }
