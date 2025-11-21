@@ -6,7 +6,10 @@ query CartTransformRunInput {
     lines {
       id
       quantity
-      attribute(key: "mup") {
+      mupAttribute: attribute(key: "mup") {
+        value
+      }
+      parentLineIdAttribute: attribute(key: "parent_line_id") {
         value
       }
       originalPriceAttribute: attribute(key: "original_price") {

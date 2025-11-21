@@ -8,6 +8,7 @@ import {
   Divider,
   List,
   ListItem,
+  Link,
   Button,
   useCartLines,
   useAttributeValues,
@@ -125,6 +126,18 @@ function MupCheckoutGuidance() {
       </Banner>
     );
   }
+  
+  // Debug: Always log what we're seeing
+  console.log('🔍 MUP Checkout Extension - Debug:', {
+    ukRegion,
+    mupOverride,
+    hasScottishAddressMismatch,
+    cartLinesCount: cartLines.length,
+    billingPostcode,
+    shippingPostcode,
+    isBillingScottish,
+    isShippingScottish
+  });
   
   // Only show MUP info for Scotland customers
   if (ukRegion !== 'scotland') {
