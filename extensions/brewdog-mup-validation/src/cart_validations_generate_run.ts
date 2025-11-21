@@ -20,7 +20,8 @@ import type {
 
 /**
  * Check if a postcode is Scottish
- * Scottish postcodes start with: AB, DD, DG, EH, FK, G, HS, IV, KA, KW, KY, ML, PA, PH, TD, ZE
+ * Scottish postcodes start with: AB, DD, DG, EH, FK, HS, IV, KA, KW, KY, ML, PA, PH, TD, ZE
+ * Glasgow postcodes: G1-G9 (NOT GL=Gloucester, GU=Guildford, GY=Guernsey)
  */
 function isScottishPostcode(postcode: string | null | undefined): boolean {
   if (!postcode) {
@@ -31,16 +32,32 @@ function isScottishPostcode(postcode: string | null | undefined): boolean {
   const normalized = postcode.trim().toUpperCase().replace(/\s+/g, '');
   console.log(`   [isScottishPostcode] Original: "${postcode}", Normalized: "${normalized}"`);
   
+  // Scottish postcode prefixes (excluding G to handle Glasgow separately)
   const scottishPrefixes = [
-    'AB', 'DD', 'DG', 'EH', 'FK', 'G', 
+    'AB', 'DD', 'DG', 'EH', 'FK',
     'HS', 'IV', 'KA', 'KW', 'KY', 'ML', 
     'PA', 'PH', 'TD', 'ZE'
   ];
   
-  const isScottish = scottishPrefixes.some(prefix => normalized.startsWith(prefix));
-  console.log(`   [isScottishPostcode] Match result: ${isScottish}`);
+  // Check standard prefixes
+  if (scottishPrefixes.some(prefix => normalized.startsWith(prefix))) {
+    console.log(`   [isScottishPostcode] Matched standard Scottish prefix`);
+    return true;
+  }
   
-  return isScottish;
+  // Special handling for Glasgow (G1-G9) - exclude Gloucester (GL), Guildford (GU), and Guernsey (GY)
+  // Glasgow postcodes: G followed by a digit (G1, G2, G3, etc.)
+  if (normalized.startsWith('G') && !normalized.startsWith('GU') && !normalized.startsWith('GL') && !normalized.startsWith('GY')) {
+    // Check if second character is a digit (G1-G9 are Glasgow)
+    const secondChar = normalized.charAt(1);
+    if (secondChar && /[0-9]/.test(secondChar)) {
+      console.log(`   [isScottishPostcode] Matched Glasgow postcode (G + digit)`);
+      return true;
+    }
+  }
+  
+  console.log(`   [isScottishPostcode] No match - not Scottish`);
+  return false;
 }
 export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInput): CartValidationsGenerateRunResult {
   console.log("🔒 MUP Validation Function CALLED");
