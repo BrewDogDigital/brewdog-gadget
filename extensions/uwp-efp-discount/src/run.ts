@@ -73,47 +73,11 @@ export function run(input: RunInput): FunctionRunResult {
         ? discountValue * 2
         : discountValue;
 
-  // Check if customer is in Scotland (for MUP compliance)
-  const ukRegion = (input.cart as any).attribute?.value;
-  const isScotland = ukRegion === 'scotland';
-  console.log('ukRegion', ukRegion);
-  console.log('isScotland', isScotland);
-
-  // Get MUP levy product variant ID to exclude it from discounts
-  const levyProductId = (input.shop as any).mupLevyProduct?.value;
-  console.log('levyProductId', levyProductId);
-
   const targets = input.cart.lines
     .filter((line) => !line.cost.compareAtAmountPerQuantity)
     // Remove any that have "Pfand" in the title
     .filter((line) => line.merchandise.__typename === "ProductVariant" && !line.merchandise.product.title.toLowerCase().includes("pfand"))
     .filter((line) => line.merchandise.__typename === "ProductVariant" && !line.merchandise.product.title.toLowerCase().includes("gift card"))
-    // Exclude MUP levy product itself
-    .filter((line) => {
-      if (line.merchandise.__typename === "ProductVariant") {
-        const variant = line.merchandise as { __typename: "ProductVariant"; id: string; product: { title: string; }; metafield?: { value: string } | null };
-        if (levyProductId && variant.id === levyProductId) {
-          console.log('Excluding MUP levy product from discount:', variant.product.title);
-          return false;
-        }
-        return true;
-      }
-      return true;
-    })
-    // Exclude alcohol products if customer is in Scotland (for MUP compliance)
-    .filter((line) => {
-      if (line.merchandise.__typename === "ProductVariant") {
-        const variant = line.merchandise as { __typename: "ProductVariant"; id: string; product: { title: string; }; metafield?: { value: string } | null };
-        const hasAlcohol = variant.metafield?.value && parseFloat(variant.metafield.value) > 0;
-        
-        if (isScotland && hasAlcohol) {
-          console.log('Excluding alcohol product from discount (Scotland + MUP):', variant.product.title);
-          return false;
-        }
-        return true;
-      }
-      return true;
-    })
     .map((line) => {
       console.log('line without compareAtAmountPerQuantity -- adding to targets', line);
       const merchandise = line.merchandise as { __typename: "ProductVariant"; id: string; product: { title: string; } };

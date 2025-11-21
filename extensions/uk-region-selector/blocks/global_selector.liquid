@@ -541,6 +541,12 @@
   <span class="uk-region-toast__description">Orders may be subject to MUP restrictions and levies.</span>
 </div>
 
+{% if customer.tags contains 'efp' or customer.tags contains 'efp-member' or customer.tags contains 'EFP Member' %}
+  {% assign memberIsEfp = true %}
+{% else %}
+  {% assign memberIsEfp = false %}
+{% endif %}
+
 <script>
 (function() {
   'use strict';
@@ -800,6 +806,7 @@
     
     // Check for pending notifications first
     checkPendingNotifications();
+
     
     const container = document.getElementById('uk-region-selector-global');
     const modal = document.getElementById('uk-region-modal-global');
@@ -1125,6 +1132,30 @@
       toastCloseBtn.addEventListener('click', closeToast);
     }
   }
+
+
+  async function setEfpOverrideAttribute() {
+    const overrideAttribute = {{ memberIsEfp }};
+
+    if (overrideAttribute === true) {
+       try {
+        await fetch('/cart/update.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            attributes: {
+              mup_override: 'true',
+              _mup_override_set: new Date().toISOString()
+            }
+          })
+        });
+      } catch (error) {
+        console.error('[Region Selector] Failed to set override attribute:', error);
+      }
+    }
+  }
+
+  setEfpOverrideAttribute();
 
   // Wait for DOM to be ready
   if (document.readyState === 'loading') {

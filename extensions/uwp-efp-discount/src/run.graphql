@@ -1,8 +1,5 @@
 query RunInput {
   cart {
-    attribute(key: "uk_region") {
-      value
-    }
     lines {
       id
       quantity
@@ -12,9 +9,6 @@ query RunInput {
           id
           product {
             title
-          }
-          metafield(namespace: "custom", key: "total_units") {
-            value
           }
         }
       }
@@ -40,9 +34,6 @@ query RunInput {
       value
     }
     efptwentyforall: metafield(namespace: "brewdog", key: "efptwentyforall") {
-      value
-    }
-    mupLevyProduct: metafield(namespace: "custom", key: "mup_levy_product") {
       value
     }
   }

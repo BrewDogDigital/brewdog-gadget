@@ -6,17 +6,34 @@ query CartValidationsGenerateRunInput {
     overrideAttribute: attribute(key: "mup_override") {
       value
     }
-    discountCodeAttribute: attribute(key: "discount_code") {
-      value
-    }
     deliveryGroups {
       deliveryAddress {
+        address1
+        address2
+        city
+        provinceCode
+        countryCode
         zip
       }
     }
     lines {
       id
       quantity
+      attribute(key: "mup") {
+        value
+      }
+      parentLineAttribute: attribute(key: "parent_line_id") {
+        value
+      }
+      unitsAttribute: attribute(key: "mup_total_units") {
+        value
+      }
+      minPriceAttribute: attribute(key: "mup_minimum_unit_price") {
+        value
+      }
+      levyAmountAttribute: attribute(key: "mup_levy_per_item") {
+        value
+      }
       merchandise {
         __typename
         ... on ProductVariant {
@@ -27,10 +44,10 @@ query CartValidationsGenerateRunInput {
         }
       }
       cost {
-        totalAmount {
+        amountPerQuantity {
           amount
         }
-        amountPerQuantity {
+        totalAmount {
           amount
         }
       }

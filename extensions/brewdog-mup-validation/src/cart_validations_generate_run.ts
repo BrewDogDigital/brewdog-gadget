@@ -68,12 +68,6 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     return { operations: [{ validationAdd: { errors: [] } }] };
   }
 
-  // Don't block ANY discounts - cart transform will handle MUP compliance
-  // by calculating levy based on post-discount prices
-  console.log("🔍 Discount handling:");
-  console.log("  - Cart transform will calculate MUP levy based on actual discounted prices");
-  console.log("  - All discounts (manual and automatic) are allowed through");
-
   // Check if customer is in Scotland
   const ukRegionAttribute = (input.cart as any).attribute;
   const ukRegion = ukRegionAttribute?.value;
@@ -214,19 +208,29 @@ export function cartValidationsGenerateRun(input: CartValidationsGenerateRunInpu
     console.log("  - MUP floor (pounds):", mupFloor);
     console.log("  - Current price per item:", pricePerItem);
     
-    // Allow all discounts through - cart transform will handle MUP compliance
-    // Cart transform calculates levy based on ACTUAL post-discount prices
+    // Only block if discounts are applied AND price is below MUP floor
+    // If no discount is applied and price is below MUP floor, let it pass so cart transform can add levy
     if (pricePerItem < 0) {
       console.log("  ❌ PRICE IS NEGATIVE - invalid state!");
       errors.push({
         message: `Invalid pricing detected. Please refresh and try again.`,
         target: "$.checkout",
       });
-    } else if (pricePerItem < mupFloor) {
-      console.log("  ⚠️  Price below MUP floor - cart transform will add levy based on post-discount price");
+    } else if (hasDiscount && pricePerItem < mupFloor) {
+      console.log("  ❌ PRICE BELOW MUP FLOOR - discount violates MUP!");
       console.log("     Current price: £" + pricePerItem.toFixed(2));
       console.log("     Required minimum: £" + mupFloor.toFixed(2));
-      console.log("     Cart transform will calculate levy: £" + (mupFloor - pricePerItem).toFixed(2));
+      console.log("     Shortfall: £" + (mupFloor - pricePerItem).toFixed(2));
+      
+      errors.push({
+        message: `Discounts cannot reduce the price below the Minimum Unit Pricing requirement. Current price: £${pricePerItem.toFixed(2)}, Minimum required: £${mupFloor.toFixed(2)}. Please remove or adjust your discounts.`,
+        target: "$.checkout",
+      });
+    } else if (!hasDiscount && pricePerItem < mupFloor) {
+      console.log("  ⚠️  Price below MUP floor but no discount applied - allowing cart transform to add levy");
+      console.log("     Current price: £" + pricePerItem.toFixed(2));
+      console.log("     Required minimum: £" + mupFloor.toFixed(2));
+      console.log("     Cart transform will add levy to meet MUP requirements");
     } else {
       console.log("  ✅ Price meets MUP requirements");
     }
