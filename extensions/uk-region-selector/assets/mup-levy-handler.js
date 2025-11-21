@@ -227,7 +227,7 @@
   }
 
   // Add MUP levy to cart
-  async function addMupLevy(parentLineId, levyAmount, quantity, settings) {
+  async function addMupLevy(parentLineId, levyAmount, quantity, settings, parentProductTitle = '') {
     if (!settings?.levyVariantId) {
       console.error('[MUP Levy] Levy variant ID not configured');
       return;
@@ -235,6 +235,7 @@
 
     console.log('[MUP Levy] Attempting to add levy variant:', settings.levyVariantId);
     console.log('[MUP Levy] Levy amount:', levyAmount, 'Quantity:', quantity);
+    console.log('[MUP Levy] Parent product title:', parentProductTitle);
 
     // Verify the levy variant exists before trying to add it
     const isValid = await verifyLevyVariant(settings.levyVariantId);
@@ -256,7 +257,8 @@
             properties: {
               mup: 'true',
               parent_line_id: parentLineId,
-              mup_levy_per_item: levyAmount.toString()
+              mup_levy_per_item: levyAmount.toString(),
+              parent_product_title: parentProductTitle
             }
           }]
         })
@@ -308,40 +310,95 @@
     }
   }
 
-  // Track processing to prevent duplicate runs
+  // Track processing to prevent duplicate runs and debounce rapid changes
   let isProcessing = false;
-  let processingTimeout = null;
+  let debounceTimeout = null;
+  let pendingCheck = false;
 
-  // Handle MUP levy check for cart items
+  // Disable/enable all ATC buttons
+  function setAtcButtonsState(disabled) {
+    const atcButtons = document.querySelectorAll('.product__atc-button, [data-atc-button], button[type="submit"][name="add"]');
+    atcButtons.forEach(button => {
+      if (disabled) {
+        button.disabled = true;
+        button.dataset.mupProcessing = 'true';
+        // Store original text
+        if (!button.dataset.originalText) {
+          button.dataset.originalText = button.textContent;
+        }
+        button.textContent = 'Processing MUP...';
+        button.style.opacity = '0.6';
+        button.style.cursor = 'wait';
+      } else {
+        button.disabled = false;
+        delete button.dataset.mupProcessing;
+        // Restore original text
+        if (button.dataset.originalText) {
+          button.textContent = button.dataset.originalText;
+          delete button.dataset.originalText;
+        }
+        button.style.opacity = '';
+        button.style.cursor = '';
+      }
+    });
+  }
+
+  // Handle MUP levy check for cart items (debounced)
   async function handleMupLevyCheck(event) {
+    // Mark that we have a pending check
+    pendingCheck = true;
+    
+    // Clear any existing debounce timeout
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+
+    // Don't disable buttons immediately - wait to check region first
+
+    // Debounce: wait 500ms after the last cart change before processing
+    debounceTimeout = setTimeout(async () => {
+      await processMupLevyCheck(event);
+    }, 500);
+  }
+
+  // Actual processing logic (called after debounce)
+  async function processMupLevyCheck(event) {
     // Prevent duplicate processing
     if (isProcessing) {
-      console.log('[MUP Levy] Already processing, skipping...');
+      console.log('[MUP Levy] Already processing, will retry...');
+      // Retry after current processing completes
+      setTimeout(() => {
+        if (pendingCheck) {
+          handleMupLevyCheck(event);
+        }
+      }, 1000);
       return;
     }
 
     isProcessing = true;
+    pendingCheck = false;
     
-    // Clear any existing timeout
-    if (processingTimeout) {
-      clearTimeout(processingTimeout);
-    }
+    console.log('[MUP Levy] Starting MUP levy check...');
 
-    // Reset processing flag after 2 seconds
-    processingTimeout = setTimeout(() => {
-      isProcessing = false;
-    }, 2000);
-
-    const cartData = event.detail || await fetch('/cart.js').then(r => r.json());
+    // Always fetch fresh cart data to avoid stale state
+    const cartData = await fetch('/cart.js').then(r => r.json()).catch(err => {
+      console.error('[MUP Levy] Failed to fetch cart:', err);
+      return null;
+    });
     
     if (!cartData || !cartData.items || cartData.items.length === 0) {
+      console.log('[MUP Levy] Cart is empty or unavailable');
       isProcessing = false;
+      setAtcButtonsState(false);
       return;
     }
+    
+    console.log('[MUP Levy] Processing cart with', cartData.items.length, 'items');
 
     // Check if customer is in Scotland
     const ukRegion = cartData.attributes?.uk_region;
     if (ukRegion !== 'scotland') {
+      console.log('[MUP Levy] Customer not in Scotland, skipping MUP processing');
       // Remove any existing levy items if not in Scotland
       const levyItems = cartData.items.filter(item => 
         item.properties && (item.properties.mup === 'true' || item.properties.mup === true)
@@ -349,11 +406,18 @@
       for (const levyItem of levyItems) {
         await removeMupLevy(levyItem);
       }
+      isProcessing = false;
       return;
     }
 
+    // Customer is in Scotland - disable buttons during MUP processing
+    console.log('[MUP Levy] Customer in Scotland - disabling buttons during MUP processing');
+    setAtcButtonsState(true);
+
     const settings = await getMupSettings();
     if (!settings || !settings.enforcementEnabled) {
+      isProcessing = false;
+      setAtcButtonsState(false);
       return;
     }
 
@@ -405,7 +469,8 @@
             parentLineId,
             checkResult.levyAmount,
             item.quantity,
-            checkResult.settings
+            checkResult.settings,
+            item.product_title || ''
           );
         } else {
           // Always update levy quantity to match parent quantity
@@ -432,10 +497,44 @@
         }
       }
     }
+
+    console.log('[MUP Levy] Completed MUP levy check');
     
     // Reset processing flag when done
     isProcessing = false;
+    
+    // If there's a pending check that came in while we were processing, handle it
+    if (pendingCheck) {
+      console.log('[MUP Levy] Processing pending check...');
+      setTimeout(() => handleMupLevyCheck({}), 100);
+    } else {
+      // Re-enable ATC buttons only if no more pending checks
+      setAtcButtonsState(false);
+      console.log('[MUP Levy] ATC buttons re-enabled');
+    }
   }
+
+  // Handle quantity button clicks - disable for 3 seconds to prevent rapid clicking
+  function handleQuantityButtonClick(event) {
+    const button = event.currentTarget;
+    
+    // Disable the button
+    button.disabled = true;
+    button.style.opacity = '0.5';
+    button.style.cursor = 'not-allowed';
+    
+    console.log('[MUP Levy] Quantity button disabled for 3 seconds');
+    
+    // Re-enable after 3 seconds
+    setTimeout(() => {
+      button.disabled = false;
+      button.style.opacity = '';
+      button.style.cursor = '';
+      console.log('[MUP Levy] Quantity button re-enabled');
+    }, 3000);
+  }
+  
+
 
   // Initialize MUP levy handler
   function initMupLevyHandler() {
@@ -454,9 +553,38 @@
     document.addEventListener('cart:added', handleMupLevyCheck);
     document.addEventListener('cart:updated', handleMupLevyCheck);
 
+    document.addEventListener("cart:updated", function() {
+      document.querySelectorAll('.cart-item__quantity').forEach(qty => {
+        qty.disabled = true;
+        qty.style.opacity = '0.5';
+        qty.style.pointerEvents = 'none';
+      });
+      setTimeout(() => {
+        document.querySelectorAll('.cart-item__quantity').forEach(qty => {
+          qty.disabled = false;
+          qty.style.opacity = '';
+          qty.style.pointerEvents = 'auto';
+        });
+      }, 3000);
+      document.querySelectorAll('.minicart__quantity').forEach(qty => {
+        qty.disabled = true;
+        qty.style.opacity = '0.5';
+        qty.style.pointerEvents = 'none';
+      });
+      setTimeout(() => {
+        document.querySelectorAll('.minicart__quantity').forEach(qty => {
+          qty.disabled = false;
+          qty.style.opacity = '';
+          qty.style.pointerEvents = 'auto';
+        });
+      }, 3000);
+    });
+
     window.mupLevyHandlerInitialized = true;
     console.log('[MUP Levy] Handler initialized');
   }
+
+  
 
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {

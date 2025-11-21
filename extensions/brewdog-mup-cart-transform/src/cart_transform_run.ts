@@ -369,17 +369,33 @@ export function cartTransformRun(input: CartTransformRunInput): CartTransformRun
       continue;
     }
 
-    const currentPricePerItem = parseFloat(parentLine.cost.amountPerQuantity.amount);
+    // Use totalAmount to get ACTUAL price including any discounts
+    const totalAmount = parseFloat(parentLine.cost.totalAmount.amount);
+    const quantity = parentLine.quantity;
+    const currentPricePerItem = quantity > 0 ? totalAmount / quantity : parseFloat(parentLine.cost.amountPerQuantity.amount);
+    const basePricePerItem = parseFloat(parentLine.cost.amountPerQuantity.amount);
     const mupFloorPerItem = unitsPerItem * minimumUnitPrice;
 
+    console.log(`💰 Parent line pricing:`, {
+      totalAmount: totalAmount,
+      quantity: quantity,
+      actualPricePerItem: currentPricePerItem,
+      basePricePerItem: basePricePerItem,
+      hasDiscount: currentPricePerItem < basePricePerItem,
+      mupFloor: mupFloorPerItem
+    });
+
     if (currentPricePerItem < mupFloorPerItem) {
+      // Calculate levy based on ACTUAL discounted price
       const levyPerItem = mupFloorPerItem - currentPricePerItem;
       const roundedLevyPerItem = roundUpToPenny(levyPerItem);
       
       console.log(`💰 Adjusting levy price for line ${levyLine.id}:`, {
-        parentPrice: currentPricePerItem,
+        parentActualPrice: currentPricePerItem,
+        parentBasePrice: basePricePerItem,
         mupFloor: mupFloorPerItem,
         levyPerItem: roundedLevyPerItem,
+        note: "Levy calculated from post-discount price"
       });
 
       // Update the levy line price

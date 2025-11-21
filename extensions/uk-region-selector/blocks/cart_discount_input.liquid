@@ -446,17 +446,21 @@
         body: JSON.stringify({
           attributes: {
             discount_code: codeTrimmed,
-            _discount_applied: new Date().toISOString()
+            _discount_applied: new Date().toISOString(),
+            _pending_discount: codeTrimmed  // Flag to show after redirect
           }
         })
       });
 
-      // Apply discount using Shopify's native discount application
-      // Use the redirect URL from validation or construct it
-      const redirectUrl = validateData.redirectUrl || `/discount/${encodeURIComponent(codeTrimmed)}?redirect=/cart`;
-      
-      // Redirect to apply the discount
-      window.location.href = redirectUrl;
+      window.setTimeout(() => {
+        // Apply discount using Shopify's native discount application
+        // Use the redirect URL from validation or construct it
+        const redirectUrl = validateData.redirectUrl || `/discount/${encodeURIComponent(codeTrimmed)}?redirect=/cart`;
+        
+        // Redirect to apply the discount
+        window.location.href = redirectUrl;
+        document.dispatchEvent(new CustomEvent('cart:updated'));
+      }, 1000);
 
     } catch (error) {
       console.error('[MUP Discount] Error applying discount:', error);
@@ -542,12 +546,50 @@
       cart = await fetch('/cart.js').then(r => r.json());
     }
 
+    // Check if we have a pending discount that was just applied
+    const pendingDiscount = cart.attributes?._pending_discount;
+    
     // Check if discount is actually active
     const hasActiveDiscount = (cart.total_discount && cart.total_discount > 0) ||
                               (cart.discount_codes && cart.discount_codes.length > 0) ||
                               (cart.cart_level_discount_applications && cart.cart_level_discount_applications.length > 0);
 
     const code = hasActiveDiscount ? getActiveDiscount(cart) : null;
+
+    // If we have a pending discount but it's not yet active, retry after a delay
+    if (pendingDiscount && !hasActiveDiscount) {
+      console.log('[MUP Discount] Pending discount detected, waiting for it to apply...', pendingDiscount);
+      
+      // Show the pending discount immediately
+      appliedCodeEl.textContent = `Code: ${pendingDiscount.toUpperCase()}`;
+      appliedSavingsEl.textContent = 'Discount applied';
+      appliedEl.style.display = 'flex';
+      form.style.display = 'none';
+      
+      // Retry after 1 second to get the actual discount amount
+      setTimeout(async () => {
+        const updatedCart = await fetch('/cart.js').then(r => r.json());
+        const updatedCode = getActiveDiscount(updatedCart);
+        
+        if (updatedCart.total_discount > 0 && updatedCode) {
+          const savings = (updatedCart.total_discount / 100).toFixed(2);
+          appliedSavingsEl.textContent = `You're saving £${savings}`;
+          
+          // Clear the pending flag
+          await fetch('/cart/update.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              attributes: {
+                _pending_discount: ''
+              }
+            })
+          });
+        }
+      }, 1000);
+      
+      return;
+    }
 
     if (hasActiveDiscount && code) {
       appliedCodeEl.textContent = `Code: ${code.toUpperCase()}`;
@@ -562,6 +604,19 @@
       form.style.display = 'none';
 
       await checkAndSetOverride(code);
+      
+      // Clear the pending flag if it exists
+      if (pendingDiscount) {
+        await fetch('/cart/update.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            attributes: {
+              _pending_discount: ''
+            }
+          })
+        });
+      }
 
     } else {
       appliedEl.style.display = 'none';
@@ -575,7 +630,8 @@
           attributes: {
             discount_code: '',
             mup_override: '',
-            _discount_applied: ''
+            _discount_applied: '',
+            _pending_discount: ''
           }
         })
       });

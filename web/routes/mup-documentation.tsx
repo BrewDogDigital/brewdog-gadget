@@ -114,7 +114,7 @@ export default function MupDocumentationPage() {
           <Text variant="headingMd" as="h3">Step 6: Add Theme Extensions</Text>
           <List type="number">
             <List.Item>In Shopify Admin → Online Store → Themes → Customize</List.Item>
-            <List.Item>Add the <strong>UK Region Selector</strong> block to your theme</List.Item>
+            <List.Item>Add the <strong>UK Region Selector</strong> block to your theme - Injection points are provided in the block for mobile and desktop</List.Item>
             <List.Item>Add <strong>Product Advisory</strong> blocks to product pages</List.Item>
             <List.Item>Add <strong>Cart Advisory</strong> blocks to cart pages</List.Item>
             <List.Item>Add <strong>Cart Discount Input</strong> block to cart page (optional, for override codes)</List.Item>

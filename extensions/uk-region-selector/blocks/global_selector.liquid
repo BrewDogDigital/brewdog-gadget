@@ -725,8 +725,81 @@
     });
   }
 
+  // Function to show toast notification
+  function showToast(title = 'Scotland Selected', description = 'Orders may be subject to MUP restrictions and levies.') {
+    // Check if there's an existing toast system in the theme
+    if (typeof window.showNotification === 'function') {
+      window.showNotification(description, 'success');
+      return;
+    }
+    
+    // Use the existing uk-region-toast structure
+    const toast = document.createElement('div');
+    toast.className = 'uk-region-toast';
+    toast.innerHTML = `
+      <button class="uk-region-toast__close" aria-label="Close" data-toast-close>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <span class="uk-region-toast__title"><strong>${title}</strong></span>
+      <span class="uk-region-toast__description">${description}</span>
+    `;
+    document.body.appendChild(toast);
+    
+    // Show toast with animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Close button handler
+    const closeBtn = toast.querySelector('[data-toast-close]');
+    const closeToast = () => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    };
+    if (closeBtn) closeBtn.addEventListener('click', closeToast);
+    
+    // Auto-dismiss after 20 seconds (matching original behavior)
+    setTimeout(closeToast, 20000);
+  }
+  
+  // Check for pending notifications and MUP checks on page load
+  function checkPendingNotifications() {
+    try {
+      const pendingNotification = sessionStorage.getItem('pendingRegionNotification');
+      if (pendingNotification) {
+        const notification = JSON.parse(pendingNotification);
+        
+        // Check if notification is recent (within last 10 seconds)
+        const isRecent = (Date.now() - notification.timestamp) < 10000;
+        
+        if (isRecent) {
+          console.log('[Region Selector] Showing pending notification:', notification);
+          setTimeout(() => {
+            showToast(notification.title || 'Scotland Selected', notification.description || 'Orders may be subject to MUP restrictions and levies.');
+          }, 500); // Delay slightly to ensure page is fully loaded
+          
+          // If we just changed to Scotland, trigger MUP levy check for existing cart items
+          if (notification.region === 'scotland') {
+            console.log('[Region Selector] Triggering MUP levy check for existing cart items after region change');
+            setTimeout(() => {
+              document.dispatchEvent(new CustomEvent('cart:updated'));
+            }, 1000); // Wait for page and MUP handler to be fully initialized
+          }
+        }
+        
+        // Clear the notification from sessionStorage
+        sessionStorage.removeItem('pendingRegionNotification');
+      }
+    } catch (error) {
+      console.error('[Region Selector] Error checking pending notifications:', error);
+    }
+  }
+
   async function init() {
     console.log('[Region Selector] Initializing...');
+    
+    // Check for pending notifications first
+    checkPendingNotifications();
     
     const container = document.getElementById('uk-region-selector-global');
     const modal = document.getElementById('uk-region-modal-global');
@@ -842,11 +915,21 @@
             // Trigger advisory updates
             window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
             
-            // If changed to Scotland, trigger cart transform to add MUP
+            // If changed to Scotland, save notification and reload to trigger MUP levy check
             if (region === 'scotland') {
-              console.log('[Region Selector] Changed to Scotland - triggering MUP cart transform...');
-              await triggerCartTransform();
-              console.log('[Region Selector] Reloading page to show MUP...');
+              console.log('[Region Selector] Changed to Scotland - will check cart items after reload...');
+              
+              // Save region change notification to sessionStorage before reload
+              sessionStorage.setItem('pendingRegionNotification', JSON.stringify({
+                type: 'region_changed',
+                region: region,
+                title: 'Scotland Selected',
+                description: 'Orders may be subject to MUP restrictions and levies.',
+                timestamp: Date.now()
+              }));
+              
+              // Reload immediately - MUP levy check will happen after reload
+              console.log('[Region Selector] Reloading page...');
               window.location.reload();
             }
           }
@@ -1007,11 +1090,21 @@
         // Trigger advisory updates
         window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
         
-        // If changed to Scotland, trigger cart transform to add MUP
+        // If changed to Scotland, save notification and reload to trigger MUP levy check
         if (region === 'scotland') {
-          console.log('[Region Selector] Changed to Scotland - triggering MUP cart transform...');
-          await triggerCartTransform();
-          console.log('[Region Selector] Reloading page to show MUP...');
+          console.log('[Region Selector] Changed to Scotland - will check cart items after reload...');
+          
+          // Save region change notification to sessionStorage before reload
+          sessionStorage.setItem('pendingRegionNotification', JSON.stringify({
+            type: 'region_changed',
+            region: region,
+            title: 'Scotland Selected',
+            description: 'Orders may be subject to MUP restrictions and levies.',
+            timestamp: Date.now()
+          }));
+          
+          // Reload immediately - MUP levy check will happen after reload
+          console.log('[Region Selector] Reloading page...');
           window.location.reload();
         }
       }
