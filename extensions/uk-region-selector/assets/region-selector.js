@@ -520,10 +520,13 @@ async function checkForOverrideDiscount() {
       
       console.log('[MUP Override] Configured override codes:', overrideCodes);
 
+    // Normalize override codes to uppercase for case-insensitive comparison
+    const normalizedOverrideCodes = overrideCodes.map(code => code.toUpperCase().trim());
+
     // Check if any applied code is an override code
     const hasOverrideCode = appliedCodes.some(code => {
       const normalizedCode = code.toUpperCase().trim();
-      return overrideCodes.includes(normalizedCode);
+      return normalizedOverrideCodes.includes(normalizedCode);
     });
 
     console.log('[MUP Override] Has override code:', hasOverrideCode);
@@ -576,25 +579,47 @@ async function checkForOverrideDiscount() {
 // Fetch override codes from backend or use hardcoded list
 
 async function fetchOverrideCodes() {
+  // Determine the correct URL based on environment
+  let url;
   if (window.location.href.includes('brewdog-dev') || window.location.href.includes('--development') || window.location.href.includes('localhost') || window.location.href.includes('127.0.0.1')) {
-    const url = 'https://brewdog--development.gadget.app/apps/mup/override-codes';
+    url = 'https://brewdog--development.gadget.app/apps/mup/override-codes';
   } else {
-    const url = 'https://brewdog.gadget.app/apps/mup/override-codes';
+    url = 'https://brewdog.gadget.app/apps/mup/override-codes';
   }
   
+  // Get shop domain
+  const shopDomain = window.Shopify?.shop || window.location.hostname;
+  
   try {
-    // Attempt to fetch from the Gadget app endpoint
-    const response = await fetch(url);
+    // Attempt to fetch from the Gadget app endpoint with cache-busting and shop domain
+    const params = new URLSearchParams({
+      t: Date.now().toString()
+    });
+    if (shopDomain) {
+      params.append('shopDomain', shopDomain);
+    }
+    const response = await fetch(`${url}?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
 
     if (response.ok) {
       const data = await response.json();
-      if (data.success && data.codes && data.codes.length > 0) {
+      console.log('[MUP Override] Response from endpoint:', data);
+      if (data.success && data.codes && Array.isArray(data.codes) && data.codes.length > 0) {
         console.log('[MUP Override] Fetched override codes from backend:', data.codes);
         return data.codes;
+      } else {
+        console.warn('[MUP Override] Endpoint returned empty or invalid codes:', data);
       }
+    } else {
+      console.error('[MUP Override] Endpoint returned error status:', response.status, response.statusText);
     }
   } catch (error) {
-    console.log('[MUP Override] Could not fetch override codes from endpoint, using defaults:', error);
+    console.error('[MUP Override] Could not fetch override codes from endpoint, using defaults:', error);
   }
 
   // Fallback to hardcoded list
@@ -605,7 +630,9 @@ async function fetchOverrideCodes() {
     'STAFF40',
     'STAFF50',
     'INTERNAL',
-    'OVERRIDE'
+    'OVERRIDE',
+    'BEERDROPNOVEMBER2025'
+    // TODO: Add all other override codes here until endpoint is deployed
   ];
 }
 

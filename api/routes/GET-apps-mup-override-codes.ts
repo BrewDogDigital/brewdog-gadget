@@ -10,7 +10,11 @@ export default async function route({ request, reply }: RouteContext) {
   reply.header('Access-Control-Allow-Origin', '*');
   reply.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
   reply.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
-  
+  // Prevent caching to ensure fresh data
+  reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  reply.header('Pragma', 'no-cache');
+  reply.header('Expires', '0');
+
   // Handle preflight OPTIONS request
   if (request.method === 'OPTIONS') {
     return reply.code(200).send();
@@ -19,8 +23,9 @@ export default async function route({ request, reply }: RouteContext) {
   try {
     // Fetch the shop's override codes from metafields
     const result = await (api as any).getMupSettings({});
-    
+
     if (!result.success || !result.settings) {
+      console.log("[Override Codes Endpoint] Failed to get settings:", result);
       return reply.code(200).send({
         success: false,
         codes: []
@@ -31,9 +36,10 @@ export default async function route({ request, reply }: RouteContext) {
     const overrideCodesString = result.settings.overrideCodes || "";
     const codes = overrideCodesString
       .split(/[,\n]+/)
-      .map((code: string) => code.trim())
+      .map((code: string) => code.trim().toUpperCase())
       .filter((code: string) => code.length > 0);
 
+    console.log("[Override Codes Endpoint] Returning codes:", codes);
     return reply.code(200).send({
       success: true,
       codes: codes

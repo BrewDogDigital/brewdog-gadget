@@ -316,7 +316,9 @@
   async function fetchOverrideCodes() {
     try {
       const backendUrl = getGadgetBackendUrl();
-      const response = await fetch(`${backendUrl}/apps/mup/override-codes.json`);
+      const shopDomain = "{{ shop.permanent_domain }}";
+      const url = `${backendUrl}/apps/mup/override-codes${shopDomain ? `?shopDomain=${encodeURIComponent(shopDomain)}` : ''}`;
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.codes && data.codes.length > 0) {
@@ -335,15 +337,19 @@
       'STAFF40',
       'STAFF50',
       'INTERNAL',
-      'OVERRIDE'
+      'OVERRIDE',
+      'BEERDROPNOVEMBER2025'
+      // TODO: Add all other override codes here until endpoint is deployed
     ];
   }
 
   // Check if code is an override code and set cart attribute
   async function checkAndSetOverride(code) {
     const overrideCodes = await fetchOverrideCodes();
-    const codeTrimmed = code.trim();
-    const isOverride = overrideCodes.some(overrideCode => overrideCode.trim() === codeTrimmed);
+    const codeTrimmed = code.trim().toUpperCase();
+    // Normalize override codes to uppercase for case-insensitive comparison
+    const normalizedOverrideCodes = overrideCodes.map(overrideCode => overrideCode.trim().toUpperCase());
+    const isOverride = normalizedOverrideCodes.includes(codeTrimmed);
 
     console.log('[MUP Discount] Code:', code, 'Is override:', isOverride);
 
