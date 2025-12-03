@@ -78,6 +78,8 @@ export function run(input: RunInput): FunctionRunResult {
     // Remove any that have "Pfand" in the title
     .filter((line) => line.merchandise.__typename === "ProductVariant" && !line.merchandise.product.title.toLowerCase().includes("pfand"))
     .filter((line) => line.merchandise.__typename === "ProductVariant" && !line.merchandise.product.title.toLowerCase().includes("gift card"))
+    // Exclude MUP levy product from discounts
+    .filter((line) => line.merchandise.__typename === "ProductVariant" && !line.merchandise.product.title.toLowerCase().includes("mup levy"))
     .map((line) => {
       console.log('line without compareAtAmountPerQuantity -- adding to targets', line);
       const merchandise = line.merchandise as { __typename: "ProductVariant"; id: string; product: { title: string; } };

@@ -325,7 +325,7 @@ export async function onSuccess({ params, record, logger, api, connections, emai
         
         logger.info({ shopDomain, orderId, orderUrl }, "Constructed order URL");
       
-      const emailTo = process.env.MUP_COMPLIANCE_EMAIL || "";
+      const emailTo = process.env.MUP_COMPLIANCE_EMAIL || "CSleads@brewdog.com";
       
       await emails.sendMail({
           to: emailTo,

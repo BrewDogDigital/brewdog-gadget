@@ -541,7 +541,7 @@
   <span class="uk-region-toast__description">Orders may be subject to MUP restrictions and levies.</span>
 </div>
 
-{% if customer.tags contains 'efp' or customer.tags contains 'efp-member' or customer.tags contains 'EFP Member' %}
+{% if customer.tags contains 'efp' or customer.tags contains 'efp-member' or customer.tags contains 'EFP Member' or customer.tags contains 'staff' or customer.tags contains 'Staff' %}
   {% assign memberIsEfp = true %}
 {% else %}
   {% assign memberIsEfp = false %}
