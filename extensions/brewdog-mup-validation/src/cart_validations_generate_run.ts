@@ -21,6 +21,7 @@ import type {
 /**
  * Check if a postcode is Scottish
  * Scottish postcodes start with: AB, DD, DG, EH, FK, HS, IV, KA, KW, KY, ML, PA, PH, TD, ZE
+ * Exceptions: TD15 (Berwick upon Tweed, England) is NOT Scottish
  * Glasgow postcodes: G1-G9 (NOT GL=Gloucester, GU=Guildford, GY=Guernsey)
  */
 function isScottishPostcode(postcode: string | null | undefined): boolean {
@@ -31,6 +32,12 @@ function isScottishPostcode(postcode: string | null | undefined): boolean {
   
   const normalized = postcode.trim().toUpperCase().replace(/\s+/g, '');
   console.log(`   [isScottishPostcode] Original: "${postcode}", Normalized: "${normalized}"`);
+  
+  // TD15 is Berwick upon Tweed (England), not Scotland
+  if (normalized.startsWith('TD15')) {
+    console.log(`   [isScottishPostcode] TD15 detected - Berwick upon Tweed (England), not Scottish`);
+    return false;
+  }
   
   // Scottish postcode prefixes (excluding G to handle Glasgow separately)
   const scottishPrefixes = [
