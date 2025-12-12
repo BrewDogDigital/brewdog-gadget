@@ -32,6 +32,11 @@ function isScottishPostcode(postcode: string | null | undefined): boolean {
   
   const normalized = postcode.trim().toUpperCase().replace(/\s+/g, '');
   
+  // TD15 is Berwick upon Tweed (England), not Scotland
+  if (normalized.startsWith('TD15')) {
+    return false;
+  }
+  
   // Scottish postcode prefixes (excluding G to handle Glasgow vs Guildford separately)
   const scottishPrefixes = [
     'AB', 'DD', 'DG', 'EH', 'FK',
