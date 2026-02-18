@@ -90,6 +90,8 @@ export const getLabelSku = (docId: string): string | null => {
     199: "10118-C6330-HAZY-V2",
     //198: "10101-C6330-PUNK-V2",
     198: "PUNK-PERSONALISED-6",
+    220: "10118-C6330-WHAM",
+    219: "10101-C6330-WHAM",
     201: "10111-C6330-WHAM",
     202: "10111-C6330-XMSM",
     203: "10118-C6330-XMSM",
