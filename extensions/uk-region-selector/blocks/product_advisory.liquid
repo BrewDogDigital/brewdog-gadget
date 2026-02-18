@@ -9,10 +9,10 @@
 <style>
 .scotland-advisory {
   padding: 1rem;
-  margin: 1rem 0;
-  background-color: #fef3c7;
-  border: 1px solid #f59e0b;
-  border-radius: 0.375rem;
+  margin: 0rem 0rem 1.5rem 0rem;
+  background-color: #f5f5f5;
+  border: 1px solid lightgray;
+  border-radius: 20px;
   display: flex;
   gap: 0.75rem;
 }
@@ -26,12 +26,12 @@
 .scotland-advisory__title {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #92400e;
+  color: black;
   margin-bottom: 0.5rem;
 }
 .scotland-advisory__text {
   font-size: 0.875rem;
-  color: #78350f;
+  color: grey;
   line-height: 1.5;
 }
 .product .scotland-advisory {
@@ -47,11 +47,11 @@
   <div class="scotland-advisory__icon">{{ block.settings.icon | default: "ℹ️" }}</div>
   <div class="scotland-advisory__content">
     <div class="scotland-advisory__title">
-      {{ block.settings.title | default: "Scotland Customers" }}
+      {{ block.settings.title | default: "Minimum unit pricing applies in Scotland" }}
     </div>
     
     <div class="scotland-advisory__text">
-      {{ block.settings.message | default: "Minimum Unit Pricing (MUP) applies. A levy may be added at checkout if discounts reduce the price below the legal minimum (£0.65 per unit)." }}
+      {{ block.settings.message | default: "Prices must stay above £0.65 per unit. Invalid discounts will be adjusted." }}
     </div>
   </div>
 </div>
@@ -194,13 +194,13 @@
       "type": "text",
       "id": "title",
       "label": "Title",
-      "default": "Scotland Customers"
+      "default": "Minimum unit pricing applies in Scotland"
     },
     {
       "type": "textarea",
       "id": "message",
       "label": "Message",
-      "default": "Minimum Unit Pricing (MUP) applies. A levy may be added at checkout if discounts reduce the price below the legal minimum (£0.65 per unit)."
+      "default": "Prices must stay above £0.65 per unit. Invalid discounts will be adjusted."
     }
   ]
 }

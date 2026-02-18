@@ -6,10 +6,10 @@
 <style>
 .scotland-advisory {
   padding: 1rem;
-  margin: 1rem 0;
-  background-color: #fef3c7;
-  border: 1px solid #f59e0b;
-  border-radius: 0.375rem;
+  margin: 0rem 0rem 1.5rem 0rem;
+  background-color: #f5f5f5;
+  border: 1px solid lightgray;
+  border-radius: 20px;
   display: flex;
   gap: 0.75rem;
 }
@@ -23,20 +23,20 @@
 .scotland-advisory__title {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #92400e;
+  color: black;
   margin-bottom: 0.5rem;
 }
 .scotland-advisory__text {
   font-size: 0.875rem;
-  color: #78350f;
+  color: grey;
   line-height: 1.5;
 }
 .scotland-advisory__levy-estimate {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid #f59e0b;
+  border-top: 1px solid grey;
   font-size: 0.875rem;
-  color: #78350f;
+  color: grey;
 }
 .scotland-advisory__levy-estimate strong {
   font-weight: 600;
@@ -111,9 +111,8 @@
           </div>
           <small>{{ block.settings.levy_note | default: "Final levy calculated at checkout" }}</small>
         {% else %}
-          <div style="padding: 0.5rem; background: #ffe; border: 1px solid #ffb; border-radius: 4px; font-size: 0.75rem;">
-            No levy required - prices are at or above minimum.<br>
-            <small>Levy only applies when discounted price drops below £{{ minimum_unit_price }} per unit.</small>
+          <div style="font-size: 0.75rem;">
+            {{ block.settings.no_levy_message | default: "No levy required." }}
           </div>
         {% endif %}
       </div>
@@ -239,6 +238,12 @@
       "id": "levy_note",
       "label": "Levy Note",
       "default": "Final levy calculated at checkout"
+    },
+    {
+      "type": "text",
+      "id": "no_levy_message",
+      "label": "No Levy Message",
+      "default": "No levy required."
     }
   ]
 }

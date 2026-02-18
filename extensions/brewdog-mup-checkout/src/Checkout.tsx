@@ -103,7 +103,7 @@ function MupCheckoutGuidance() {
   // If customer has Scottish address but hasn't selected Scotland, show critical warning
   if (hasScottishAddressMismatch) {
     return (
-      <Banner status="warning">
+      <Banner status="info">
         <BlockStack spacing="base">
           <Heading level={2}>⚠️ Scottish Address Detected</Heading>
           
@@ -235,7 +235,7 @@ function MupCheckoutGuidance() {
       {/* Repair UI - Show when discount is applied in Scotland AND we detect alcoholic products (but NOT if override is active) */}
       {/* The validation function will actually block checkout if there's a MUP violation */}
       {hasDiscountApplied && !hasOverride && (hasAlcoholicProducts || hasProductLines) && (
-        <Banner status="warning">
+        <Banner status="info">
           <BlockStack spacing="base">
             <Heading level={3}>Possible MUP Violation</Heading>
             
@@ -286,13 +286,16 @@ function MupCheckoutGuidance() {
         </Banner>
       )}
 
-      <Banner status="warning">
+      <Banner status="info">
         <BlockStack spacing="tight">
           <Text emphasis="bold">
             {translate('scotland_notice')}
           </Text>
           <Text size="small">
             Minimum Unit Pricing (MUP) ensures alcohol is not sold below £0.65 per unit in Scotland.
+          </Text>
+          <Text size="small">
+            <Text emphasis="bold">Note:</Text> Invalid discounts will be removed at checkout.
           </Text>
         </BlockStack>
       </Banner>
@@ -331,15 +334,6 @@ function MupCheckoutGuidance() {
         </BlockStack>
       )}
 
-      {/* Info about validation - always show for Scotland customers */}
-      <Banner status="warning">
-        <BlockStack spacing="tight">
-          <Text size="small">
-            <Text emphasis="bold">Note:</Text> Discount codes that reduce prices below the minimum unit price will be automatically blocked at checkout.
-          </Text>
-        </BlockStack>
-      </Banner>
-      
     </BlockStack>
   );
 }
