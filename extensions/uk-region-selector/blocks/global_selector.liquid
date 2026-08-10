@@ -593,12 +593,6 @@
       });
       if (response.ok) {
         console.log('[Region Selector] Cart attribute updated:', region);
-        
-        // Only show toast on active user selection, not on silent background re-sync
-        if (region === 'scotland' && !silent) {
-          showScotlandToast();
-        }
-        
         return await response.json();
       }
     } catch (error) {
@@ -726,33 +720,12 @@
     setTimeout(closeToast, 20000);
   }
   
-  // Check for pending notifications and MUP checks on page load
+  // Clear any leftover pending toast from older builds (toast UI removed)
   function checkPendingNotifications() {
     try {
-      const pendingNotification = sessionStorage.getItem('pendingRegionNotification');
-      if (pendingNotification) {
-        const notification = JSON.parse(pendingNotification);
-        
-        // Check if notification is recent (within last 10 seconds)
-        const isRecent = (Date.now() - notification.timestamp) < 10000;
-        
-        if (isRecent) {
-          console.log('[Region Selector] Showing pending notification:', notification);
-          setTimeout(() => {
-            showToast(notification.title || 'Scotland Selected', notification.description || 'Orders may be subject to MUP restrictions and levies.');
-          }, 500); // Delay slightly to ensure page is fully loaded
-          
-          // NOTE: cart:updated was previously dispatched here to trigger MUP levy checks,
-          // but MUP is enforced server-side by Shopify Functions — no client event needed.
-          // Dispatching cart:updated caused the theme to wipe and re-render the cart,
-          // which made the cart appear empty until a second manual refresh.
-        }
-        
-        // Clear the notification from sessionStorage
-        sessionStorage.removeItem('pendingRegionNotification');
-      }
+      sessionStorage.removeItem('pendingRegionNotification');
     } catch (error) {
-      console.error('[Region Selector] Error checking pending notifications:', error);
+      // ignore
     }
   }
 
@@ -874,21 +847,9 @@
             // Trigger advisory updates
             window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
             
-            // If changed to Scotland, save notification and reload to trigger MUP levy check
+            // If changed to Scotland, reload to trigger MUP levy check
             if (region === 'scotland') {
-              console.log('[Region Selector] Changed to Scotland - will check cart items after reload...');
-              
-              // Save region change notification to sessionStorage before reload
-              sessionStorage.setItem('pendingRegionNotification', JSON.stringify({
-                type: 'region_changed',
-                region: region,
-                title: 'Scotland Selected',
-                description: 'Orders may be subject to MUP restrictions and levies.',
-                timestamp: Date.now()
-              }));
-              
-              // Reload immediately - MUP levy check will happen after reload
-              console.log('[Region Selector] Reloading page...');
+              console.log('[Region Selector] Changed to Scotland - reloading page...');
               window.location.reload();
             }
           }
@@ -1053,21 +1014,9 @@
         // Trigger advisory updates
         window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
         
-        // If changed to Scotland, save notification and reload to trigger MUP levy check
+        // If changed to Scotland, reload to trigger MUP levy check
         if (region === 'scotland') {
-          console.log('[Region Selector] Changed to Scotland - will check cart items after reload...');
-          
-          // Save region change notification to sessionStorage before reload
-          sessionStorage.setItem('pendingRegionNotification', JSON.stringify({
-            type: 'region_changed',
-            region: region,
-            title: 'Scotland Selected',
-            description: 'Orders may be subject to MUP restrictions and levies.',
-            timestamp: Date.now()
-          }));
-          
-          // Reload immediately - MUP levy check will happen after reload
-          console.log('[Region Selector] Reloading page...');
+          console.log('[Region Selector] Changed to Scotland - reloading page...');
           window.location.reload();
         }
       }

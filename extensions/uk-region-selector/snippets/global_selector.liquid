@@ -315,12 +315,6 @@
       });
       if (response.ok) {
         console.log('[Region Selector] Cart attribute updated:', region);
-        
-        // Only show toast on active user selection, not on silent background re-sync
-        if (region === 'scotland' && !silent) {
-          showScotlandToast();
-        }
-        
         return await response.json();
       }
     } catch (error) {
