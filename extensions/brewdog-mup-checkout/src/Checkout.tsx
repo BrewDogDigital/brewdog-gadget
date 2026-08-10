@@ -105,7 +105,7 @@ function MupCheckoutGuidance() {
     return (
       <Banner status="info">
         <BlockStack spacing="base">
-          <Heading level={2}>⚠️ Scottish Address Detected</Heading>
+          <Heading level={2}>Scottish Address Detected</Heading>
           
           <Text>
             {isBillingScottish && `Your billing address (${billingPostcode}) is in Scotland. `}
@@ -292,7 +292,7 @@ function MupCheckoutGuidance() {
             {translate('scotland_notice')}
           </Text>
           <Text size="small">
-            Minimum Unit Pricing (MUP) ensures alcohol is not sold below £0.65 per unit in Scotland.
+            Alcohol must remain above £0.65/unit in Scotland.
           </Text>
           <Text size="small">
             <Text emphasis="bold">Note:</Text> Invalid discounts will be removed at checkout.

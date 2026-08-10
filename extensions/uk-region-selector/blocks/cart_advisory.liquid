@@ -47,6 +47,18 @@
 .main-cart .scotland-advisory {
   margin-top: 1rem;
 }
+
+/* Hide the original element when it has been cloned and injected elsewhere */
+.scotland-advisory--relocated {
+  display: none !important;
+}
+
+/* CSS-driven visibility — body class persists through AJAX section re-renders.
+   Only targets the active (injected or in-place) copy, not the relocated original.
+   !important overrides the inline style="display:none" on the advisory element. */
+body.mup-scotland .scotland-advisory--cart:not(.scotland-advisory--relocated) {
+  display: flex !important;
+}
 </style>
 
 <div 
@@ -54,7 +66,7 @@
   data-scotland-advisory="cart-{{ block.id }}"
   style="display: none;"
 >
-  <div class="scotland-advisory__icon">{{ block.settings.icon | default: "⚠️" }}</div>
+  <div class="scotland-advisory__icon">{{ block.settings.icon | default: "🍺" }}</div>
   <div class="scotland-advisory__content">
     <div class="scotland-advisory__title">
       {{ block.settings.title | default: "Minimum Unit Pricing Applies" }}
@@ -128,6 +140,27 @@
       
       console.log('[Cart Advisory] Auto-inject selector:', autoInjectSelector);
       console.log('[Cart Advisory] Advisory element:', advisory);
+
+      // Read mup_region cookie synchronously — avoids race condition with
+      // global_selector's async /cart/update.js re-sync on page load.
+      function getCookie(name) {
+        const value = '; ' + document.cookie;
+        const parts = value.split('; ' + name + '=');
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+      }
+
+      // Set a body class immediately from the cookie.
+      // This class persists through every AJAX section re-render because the
+      // <body> element is never replaced — only the section innerHTML is.
+      // The CSS rule "body.mup-scotland .scotland-advisory--cart { display:flex !important }"
+      // then keeps the advisory visible without any JS needing to re-run.
+      const initialRegion = getCookie('mup_region');
+      if (initialRegion === 'scotland') {
+        document.body.classList.add('mup-scotland');
+      } else {
+        document.body.classList.remove('mup-scotland');
+      }
       
       // Auto-inject if selector is provided
       if (autoInjectSelector && autoInjectSelector.trim() !== '') {
@@ -135,13 +168,17 @@
         console.log('[Cart Advisory] Target element:', targetElement);
         
         if (targetElement && advisory) {
-          // Clone the advisory and inject it
+          // Clone the advisory and inject it into the target element
           const clonedAdvisory = advisory.cloneNode(true);
           clonedAdvisory.setAttribute('data-scotland-advisory', 'cart-{{ block.id }}-injected');
+          // Remove the inline display:none so the CSS body class rule can control it
+          clonedAdvisory.style.display = '';
           targetElement.insertAdjacentElement('afterend', clonedAdvisory);
           
-          // Hide the original block
-          advisory.style.display = 'none';
+          // Mark the original as relocated (CSS hides it with !important)
+          // Using a class instead of inline style so the CSS rule above can
+          // specifically target the active injected copy only.
+          advisory.classList.add('scotland-advisory--relocated');
           
           console.log('[Cart Advisory] Injected after target element');
           
@@ -157,25 +194,37 @@
       }
       
       function checkRegionAndShow(advisoryId) {
+        // 1. Check cookie first — instant, no async, no race condition.
+        //    The mup_region cookie is always in sync because we write it on
+        //    every selection AND the global selector re-syncs it on init.
+        const cookieRegion = getCookie('mup_region');
+        if (cookieRegion) {
+          console.log('[Cart Advisory] Region from cookie:', cookieRegion);
+          updateAdvisory(cookieRegion, advisoryId);
+          return;
+        }
+
+        // 2. Cookie absent — fall back to uwp-cart element or cart.js fetch.
         const uwpCart = document.querySelector('uwp-cart');
-        let region;
         
         if (uwpCart) {
-          const cartData = JSON.parse(uwpCart.getAttribute('cart-data'));
-          region = cartData.attributes?.uk_region;
-          updateAdvisory(region, advisoryId);
+          // Synchronous path — data already available on the element
+          try {
+            const cartData = JSON.parse(uwpCart.getAttribute('cart-data'));
+            const region = cartData.attributes?.uk_region;
+            updateAdvisory(region, advisoryId);
+          } catch(e) {
+            console.error('[Cart Advisory] Failed to parse uwp-cart data:', e);
+          }
         } else {
+          // Async path — only call updateAdvisory inside .then(), never outside
           fetch('/cart.js')
             .then(response => response.json())
             .then(cart => {
-              region = cart.attributes?.uk_region;
+              const region = cart.attributes?.uk_region;
               updateAdvisory(region, advisoryId);
             })
-            .catch(error => console.error('Error checking region:', error));
-        }
-        
-        if (region) {
-          updateAdvisory(region, advisoryId);
+            .catch(error => console.error('[Cart Advisory] Error checking region:', error));
         }
       }
       
@@ -195,6 +244,85 @@
           console.error('[Cart Advisory] Advisory element not found!');
         }
       }
+
+      // Also respond to live region changes within the same page load
+      window.addEventListener('regionChanged', (e) => {
+        const region = e.detail?.region;
+        // Keep body class in sync so CSS rule stays correct after a live change
+        if (region === 'scotland') {
+          document.body.classList.add('mup-scotland');
+        } else {
+          document.body.classList.remove('mup-scotland');
+        }
+        const activeId = autoInjectSelector && autoInjectSelector.trim() !== ''
+          ? 'cart-{{ block.id }}-injected'
+          : 'cart-{{ block.id }}';
+        updateAdvisory(region, activeId);
+      });
+
+      // Re-apply advisory after any cart section re-render (quantity change, etc.)
+      // The Section Rendering API replaces the DOM, resetting display:none,
+      // so we must re-run the cookie check each time the section reloads.
+      function reApplyAdvisory() {
+        const cookieRegion = getCookie('mup_region');
+        if (!cookieRegion) return;
+
+        // The advisory element may have been replaced — re-query from DOM
+        const activeId = autoInjectSelector && autoInjectSelector.trim() !== ''
+          ? 'cart-{{ block.id }}-injected'
+          : 'cart-{{ block.id }}';
+
+        // Small delay to let the new HTML settle into the DOM
+        setTimeout(() => updateAdvisory(cookieRegion, activeId), 50);
+      }
+
+      // Shopify's native section rendering event
+      document.addEventListener('shopify:section:load', reApplyAdvisory);
+
+      // Common custom cart events fired by Shopify themes
+      document.addEventListener('cart:updated',  reApplyAdvisory);
+      document.addEventListener('cart:refresh',  reApplyAdvisory);
+      document.addEventListener('cart:rendered', reApplyAdvisory);
+
+      // MutationObserver — re-injects the advisory when the cart section
+      // re-renders (qty change, remove item, etc.) and wipes the clone.
+      //
+      // Root cause: Shopify Section Rendering replaces the entire section HTML,
+      // removing the injected clone. The previous observer only looked for
+      // style="display:none" changes, but the element was fully gone, not hidden.
+      //
+      // Fix: store the original HTML as a template once, then re-inject it
+      // whenever the injected clone is missing from the DOM.
+      const injectedId = 'cart-{{ block.id }}-injected';
+      const templateHTML = advisory ? advisory.outerHTML : null;
+
+      function reinjectIfMissing() {
+        // Only needed when auto-inject is configured
+        if (!autoInjectSelector || autoInjectSelector.trim() === '') return;
+        if (!templateHTML) return;
+
+        // If the injected clone is still in the DOM, nothing to do
+        if (document.querySelector('[data-scotland-advisory="' + injectedId + '"]')) return;
+
+        // Find the target element again (it was also replaced by re-render)
+        const target = document.querySelector(autoInjectSelector);
+        if (!target) return;
+
+        // Build a fresh clone from the stored template and insert it
+        const tmp = document.createElement('div');
+        tmp.innerHTML = templateHTML;
+        const freshClone = tmp.firstElementChild;
+        if (!freshClone) return;
+
+        freshClone.setAttribute('data-scotland-advisory', injectedId);
+        freshClone.classList.remove('scotland-advisory--relocated'); // templateHTML was captured after this class was added — strip it so CSS shows the clone
+        freshClone.style.display = ''; // CSS body.mup-scotland controls visibility
+        target.insertAdjacentElement('afterend', freshClone);
+        console.log('[Cart Advisory] Re-injected after section re-render');
+      }
+
+      const observer = new MutationObserver(reinjectIfMissing);
+      observer.observe(document.body, { childList: true, subtree: true });
     })();
   </script>
 
@@ -207,13 +335,14 @@
       "type": "text",
       "id": "auto_inject_selector",
       "label": "Auto-inject CSS Selector (optional)",
-      "info": "e.g., .cart-summary, #cart-totals - Leave blank to disable auto-injection"
+      "info": "e.g., .cart-summary, #cart-totals - Leave blank to disable auto-injection",
+      "default": ".mupbox"
     },
     {
       "type": "text",
       "id": "icon",
       "label": "Icon",
-      "default": "⚠️"
+      "default": "🍺"
     },
     {
       "type": "text",

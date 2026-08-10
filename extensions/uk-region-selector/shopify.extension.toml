@@ -82,12 +82,13 @@ target = "section"
   type = "text"
   label = "Auto-inject CSS Selector (optional)"
   info = "e.g., .cart-summary, #cart-totals - Leave blank to disable auto-injection"
+  default = ".mupbox"
 
   [[extensions.settings.blocks.settings]]
   id = "icon"
   type = "text"
   label = "Icon"
-  default = "⚠️"
+  default = "🍺"
 
   [[extensions.settings.blocks.settings]]
   id = "title"

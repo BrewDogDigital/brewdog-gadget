@@ -16,8 +16,7 @@
   {% assign maxmind_license_key = shop.metafields.custom.mup_maxmind_license_key %}
 {% endif %}
 
-<!-- Flag Icons CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" />
+<!-- Flag Icons CSS removed - using text abbreviations only -->
 
 <!-- MaxMind GeoIP2 JavaScript -->
 <script src="//geoip-js.com/js/apis/geoip2/v2.1/geoip2.js" type="text/javascript"></script>
@@ -73,32 +72,19 @@
   flex: 1;
 }
 
-/* Square flag icons - cropped to square then made circular */
-.uk-region-flag-square {
-  width: 1.5em;
-  height: 1.5em;
-  border-radius: 50%;
-  border: 1px solid #d1d5db;
-  display: inline-block;
-  overflow: hidden;
-  flex-shrink: 0;
-  /* Crop rectangular flag to square by fitting height and centering horizontally */
-  background-size: auto 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  /* Force square aspect ratio */
-  aspect-ratio: 1 / 1;
-}
-
-.uk-region-custom-select__value .uk-region-flag-square {
-  font-size: 1.25em;
-  width: 1.5em;
-  height: 1.5em;
-}
-
 .uk-region-custom-select__placeholder {
   color: #9ca3af;
 }
+
+/* Abbreviation badge shown in trigger */
+.uk-region-option__abbr {
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: inherit;
+  flex-shrink: 0;
+}
+
 
 .uk-region-custom-select__arrow {
   flex-shrink: 0;
@@ -151,11 +137,6 @@
   font-weight: 600;
 }
 
-.uk-region-custom-select__option .uk-region-flag-square {
-  font-size: 1.5em;
-  width: 1.75em;
-  height: 1.75em;
-}
 .uk-region-selector__label {
   font-size: 0.875rem;
   font-weight: 600;
@@ -314,34 +295,23 @@
     transform: translateY(0);
   }
 }
+@keyframes modalShake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-5px); }
+  80%       { transform: translateX(5px); }
+}
 
 @media (max-width: 992px) {
-  .uk-region-custom-select__trigger span + span,
-  .uk-region-custom-select__option span {
-    display: none;
-  }
-
-  .uk-region-custom-select__option {
-    padding: 5px;
-    justify-content: center;
-  }
-
-  .uk-region-selector__wrapper .uk-region-custom-select__value span.fi,
-  .uk-region-custom-select__option span.fi {
-    display: inline-block;
-    font-size: 14px;
-    width: 1.25em;
-    height: 1.25em;
-  }
-
   .uk-region-custom-select__arrow {
     width: 10px;
   }
-
   .uk-region-custom-select__trigger {
     margin-left: 6px;
     margin-right: 6px;
-    padding: 5px;
+    padding: 6px 8px;
+    gap: 6px;
   }
 }
 
@@ -447,22 +417,10 @@
       </div>
       
       <div class="uk-region-custom-select__dropdown" data-select-dropdown>
-        <button type="button" class="uk-region-custom-select__option" data-value="england">
-          <span class="fi fi-gb-eng uk-region-flag-square"></span>
-          <span>England</span>
-        </button>
-        <button type="button" class="uk-region-custom-select__option" data-value="scotland">
-          <span class="fi fi-gb-sct uk-region-flag-square"></span>
-          <span>Scotland</span>
-        </button>
-        <button type="button" class="uk-region-custom-select__option" data-value="wales">
-          <span class="fi fi-gb-wls uk-region-flag-square"></span>
-          <span>Wales</span>
-        </button>
-        <button type="button" class="uk-region-custom-select__option" data-value="northern_ireland">
-          <span class="fi fi-gb-nir uk-region-flag-square"></span>
-          <span>Northern Ireland</span>
-        </button>
+        <button type="button" class="uk-region-custom-select__option" data-value="england">ENG</button>
+        <button type="button" class="uk-region-custom-select__option" data-value="scotland">SCT</button>
+        <button type="button" class="uk-region-custom-select__option" data-value="wales">WLS</button>
+        <button type="button" class="uk-region-custom-select__option" data-value="northern_ireland">NIR</button>
       </div>
     </div>
     
@@ -621,7 +579,7 @@
     toast.classList.remove('show');
   }
 
-  async function setCartAttribute(region) {
+  async function setCartAttribute(region, silent = false) {
     try {
       const response = await fetch('/cart/update.js', {
         method: 'POST',
@@ -636,8 +594,8 @@
       if (response.ok) {
         console.log('[Region Selector] Cart attribute updated:', region);
         
-        // Show toast notification if Scotland is selected
-        if (region === 'scotland') {
+        // Only show toast on active user selection, not on silent background re-sync
+        if (region === 'scotland' && !silent) {
           showScotlandToast();
         }
         
@@ -784,13 +742,10 @@
             showToast(notification.title || 'Scotland Selected', notification.description || 'Orders may be subject to MUP restrictions and levies.');
           }, 500); // Delay slightly to ensure page is fully loaded
           
-          // If we just changed to Scotland, trigger MUP levy check for existing cart items
-          if (notification.region === 'scotland') {
-            console.log('[Region Selector] Triggering MUP levy check for existing cart items after region change');
-            setTimeout(() => {
-              document.dispatchEvent(new CustomEvent('cart:updated'));
-            }, 1000); // Wait for page and MUP handler to be fully initialized
-          }
+          // NOTE: cart:updated was previously dispatched here to trigger MUP levy checks,
+          // but MUP is enforced server-side by Shopify Functions — no client event needed.
+          // Dispatching cart:updated caused the theme to wipe and re-render the cart,
+          // which made the cart appear empty until a second manual refresh.
         }
         
         // Clear the notification from sessionStorage
@@ -823,12 +778,12 @@
     const modalSubmit = modal.querySelector('[data-modal-submit]');
     const modalCloseButtons = modal.querySelectorAll('[data-modal-close]');
     
-    // Region data with labels and flags
+    // Region data with labels and abbreviations
     const regionData = {
-      'england': { label: 'England', flag: 'fi-gb-eng', flagClass: 'uk-region-flag-square' },
-      'scotland': { label: 'Scotland', flag: 'fi-gb-sct', flagClass: 'uk-region-flag-square' },
-      'wales': { label: 'Wales', flag: 'fi-gb-wls', flagClass: 'uk-region-flag-square' },
-      'northern_ireland': { label: 'Northern Ireland', flag: 'fi-gb-nir', flagClass: 'uk-region-flag-square' }
+      'england':          { label: 'England',          abbr: 'ENG' },
+      'scotland':         { label: 'Scotland',         abbr: 'SCT' },
+      'wales':            { label: 'Wales',            abbr: 'WLS' },
+      'northern_ireland': { label: 'Northern Ireland', abbr: 'NIR' }
     };
     
     // Custom select elements (will be initialized after injection)
@@ -840,10 +795,7 @@
       
       if (region && regionData[region]) {
         const data = regionData[region];
-        valueDisplay.innerHTML = `
-          <span class="fi ${data.flag} ${data.flagClass}"></span>
-          <span>${data.label}</span>
-        `;
+        valueDisplay.innerHTML = `<span class="uk-region-option__abbr">${data.abbr}</span>`;
       } else {
         valueDisplay.innerHTML = `<span class="uk-region-custom-select__placeholder">{{ app.settings.placeholder_text | default: "Select Region" }}</span>`;
       }
@@ -1018,10 +970,14 @@
     console.log('[Region Selector] Saved region:', savedRegion);
     
     if (savedRegion) {
-      // Already have a saved region, just restore it
+      // Already have a saved region — restore UI and silently re-sync the cart
+      // attribute in case the cart was reset or recreated since the last visit
       if (select) select.value = savedRegion;
       updateCustomSelectDisplay(savedRegion);
       console.log('[Region Selector] Region loaded from cookie:', savedRegion);
+      setCartAttribute(savedRegion, true).catch(e =>
+        console.warn('[Region Selector] Silent cart re-sync failed:', e)
+      );
     } else {
       // No saved region
       // Check GeoIP enabled AFTER container is injected
@@ -1118,6 +1074,9 @@
     });
   }
 
+    // Handle modal close — only allow dismissal if a region is already saved.
+    // On first visit (no cookie) the overlay click is blocked so customers
+    // can't accidentally skip the required selection.
     // Handle modal close
     modalCloseButtons?.forEach(btn => {
       btn.addEventListener('click', () => {

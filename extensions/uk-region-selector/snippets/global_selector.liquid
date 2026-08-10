@@ -170,6 +170,13 @@
     transform: translateY(0);
   }
 }
+@keyframes modalShake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-5px); }
+  80%       { transform: translateX(5px); }
+}
 </style>
 
 <div 
@@ -253,7 +260,7 @@
 
 <!-- Toast Notification -->
 <div id="uk-region-toast" class="uk-region-toast">
-  <span class="uk-region-toast__icon">⚠️</span>
+  <span class="uk-region-toast__icon">🍺</span>
   <span class="uk-region-toast__message">Scotland selected — orders may be subject to MUP restrictions and levies.</span>
 </div>
 
@@ -294,7 +301,7 @@
     }, 5000);
   }
 
-  async function setCartAttribute(region) {
+  async function setCartAttribute(region, silent = false) {
     try {
       const response = await fetch('/cart/update.js', {
         method: 'POST',
@@ -309,8 +316,8 @@
       if (response.ok) {
         console.log('[Region Selector] Cart attribute updated:', region);
         
-        // Show toast notification if Scotland is selected
-        if (region === 'scotland') {
+        // Only show toast on active user selection, not on silent background re-sync
+        if (region === 'scotland' && !silent) {
           showScotlandToast();
         }
         
@@ -437,6 +444,10 @@
     if (savedRegion) {
       if (select) select.value = savedRegion;
       console.log('[Region Selector] Region loaded from cookie');
+      // Silently re-sync cart attribute — cart can lose attributes between sessions
+      setCartAttribute(savedRegion, true).catch(e =>
+        console.warn('[Region Selector] Silent cart re-sync failed:', e)
+      );
     } else {
       // No saved region - show modal
       console.log('[Region Selector] No saved region, showing modal...');
