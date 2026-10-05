@@ -270,6 +270,30 @@
 
   const COOKIE_NAME = "mup_region";
   const COOKIE_EXPIRY_DAYS = 180;
+  // Snippet fallback: keep same default as app embed exclude setting
+  const EXCLUDE_PATHS = '/bars/';
+  const INCLUDE_PATHS = '';
+
+  function parsePathList(raw) {
+    return String(raw || '')
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  function pathMatchesAny(pathname, prefixes) {
+    return prefixes.some((p) => pathname.includes(p));
+  }
+
+  function shouldSuppressRegionPrompt() {
+    const pathname = window.location.pathname;
+    const excludes = parsePathList(EXCLUDE_PATHS);
+    const includes = parsePathList(INCLUDE_PATHS);
+
+    if (pathMatchesAny(pathname, excludes)) return true;
+    if (includes.length > 0 && !pathMatchesAny(pathname, includes)) return true;
+    return false;
+  }
 
   function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -442,6 +466,8 @@
       setCartAttribute(savedRegion, true).catch(e =>
         console.warn('[Region Selector] Silent cart re-sync failed:', e)
       );
+    } else if (shouldSuppressRegionPrompt()) {
+      console.log('[Region Selector] Skipping region prompt on excluded/non-included URL');
     } else {
       // No saved region - show modal
       console.log('[Region Selector] No saved region, showing modal...');
@@ -466,12 +492,10 @@
         // Trigger advisory updates
         window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
         
-        // If changed to Scotland, trigger cart transform to add MUP
+        // Scotland: nudge cart so MUP Functions / levy logic run without a full page reload
         if (region === 'scotland') {
           console.log('[Region Selector] Changed to Scotland - triggering MUP cart transform...');
           await triggerCartTransform();
-          console.log('[Region Selector] Reloading page to show MUP...');
-          window.location.reload();
         }
       }
     });
@@ -505,12 +529,10 @@
         // Trigger advisory updates
         window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
         
-        // If changed to Scotland, trigger cart transform to add MUP
+        // Scotland: nudge cart so MUP Functions / levy logic run without a full page reload
         if (region === 'scotland') {
           console.log('[Region Selector] Changed to Scotland - triggering MUP cart transform...');
           await triggerCartTransform();
-          console.log('[Region Selector] Reloading page to show MUP...');
-          window.location.reload();
         }
       }
     });

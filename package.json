@@ -14,6 +14,7 @@
     "@shopify/plugin-cloudflare"
   ],
   "dependencies": {
+    "@fastify/cors": "^9.0.1",
     "@gadget-client/brewdog": "link:.gadget/client",
     "@gadgetinc/react": "^0.15.11",
     "@gadgetinc/react-shopify-app-bridge": "^0.15.2",
@@ -24,11 +25,10 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "6.15.0",
-    "shopify-api-node": "^3.12.6",
-    "@fastify/cors": "^9.0.1"
+    "shopify-api-node": "^3.12.6"
   },
   "devDependencies": {
-    "@shopify/cli": "^3.63.2",
+    "@shopify/cli": "^4.8.4",
     "@types/node": "^20.12.8",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",

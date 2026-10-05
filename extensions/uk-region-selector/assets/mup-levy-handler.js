@@ -315,7 +315,7 @@
   let debounceTimeout = null;
   let pendingCheck = false;
 
-  // Disable/enable all ATC buttons
+  // Disable/enable ATC + checkout while MUP levy is updating
   function setAtcButtonsState(disabled) {
     const atcButtons = document.querySelectorAll('.product__atc-button, [data-atc-button], button[type="submit"][name="add"]');
     atcButtons.forEach(button => {
@@ -339,6 +339,27 @@
         }
         button.style.opacity = '';
         button.style.cursor = '';
+      }
+    });
+
+    const checkoutControls = document.querySelectorAll(
+      'button[name="checkout"], input[name="checkout"], button[type="submit"][name="checkout"], .cart__checkout-button, [href="/checkout"], [href*="/checkouts"], a[href="/checkout"]'
+    );
+    checkoutControls.forEach((el) => {
+      if (disabled) {
+        el.dataset.mupCheckoutLocked = 'true';
+        if ('disabled' in el) el.disabled = true;
+        el.setAttribute('aria-disabled', 'true');
+        el.style.opacity = '0.6';
+        el.style.pointerEvents = 'none';
+        el.style.cursor = 'wait';
+      } else if (el.dataset.mupCheckoutLocked === 'true') {
+        delete el.dataset.mupCheckoutLocked;
+        if ('disabled' in el) el.disabled = false;
+        el.removeAttribute('aria-disabled');
+        el.style.opacity = '';
+        el.style.pointerEvents = '';
+        el.style.cursor = '';
       }
     });
   }
@@ -407,6 +428,7 @@
         await removeMupLevy(levyItem);
       }
       isProcessing = false;
+      setAtcButtonsState(false);
       return;
     }
 
@@ -552,6 +574,14 @@
     // Listen to both cart events to handle additions and quantity updates
     document.addEventListener('cart:added', handleMupLevyCheck);
     document.addEventListener('cart:updated', handleMupLevyCheck);
+
+    // Region switch (e.g. England → Scotland) — lock checkout immediately, then re-run levy check
+    window.addEventListener('regionChanged', (e) => {
+      if (e.detail?.region === 'scotland') {
+        setAtcButtonsState(true);
+      }
+      handleMupLevyCheck();
+    });
 
     document.addEventListener("cart:updated", function() {
       document.querySelectorAll('.cart-item__quantity').forEach(qty => {

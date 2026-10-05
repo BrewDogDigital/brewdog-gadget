@@ -509,8 +509,35 @@
 (function() {
   'use strict';
 
+  console.info('[BrewDog DEV TEST 2026-10-05] UK region selector preview loaded');
+
   const COOKIE_NAME = "mup_region";
   const COOKIE_EXPIRY_DAYS = 180;
+  const EXCLUDE_PATHS = {{ block.settings.exclude_paths | default: '/bars/' | json }};
+  const INCLUDE_PATHS = {{ block.settings.include_paths | default: '' | json }};
+
+  function parsePathList(raw) {
+    return String(raw || '')
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  function pathMatchesAny(pathname, prefixes) {
+    return prefixes.some((p) => pathname.includes(p));
+  }
+
+  // Skip forced region prompt on excluded URLs (and non-included URLs when include list is set).
+  // Does not clear cookies — shop pages still get the normal journey if no region is set.
+  function shouldSuppressRegionPrompt() {
+    const pathname = window.location.pathname;
+    const excludes = parsePathList(EXCLUDE_PATHS);
+    const includes = parsePathList(INCLUDE_PATHS);
+
+    if (pathMatchesAny(pathname, excludes)) return true;
+    if (includes.length > 0 && !pathMatchesAny(pathname, includes)) return true;
+    return false;
+  }
 
   // Read MaxMind config from container data attributes
   function getGeoipEnabled() {
@@ -847,10 +874,10 @@
             // Trigger advisory updates
             window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
             
-            // If changed to Scotland, reload to trigger MUP levy check
+            // Scotland: nudge cart so MUP Functions / levy logic run without a full page reload
             if (region === 'scotland') {
-              console.log('[Region Selector] Changed to Scotland - reloading page...');
-              window.location.reload();
+              console.log('[Region Selector] Changed to Scotland - triggering MUP cart transform...');
+              await triggerCartTransform();
             }
           }
         });
@@ -939,6 +966,8 @@
       setCartAttribute(savedRegion, true).catch(e =>
         console.warn('[Region Selector] Silent cart re-sync failed:', e)
       );
+    } else if (shouldSuppressRegionPrompt()) {
+      console.log('[Region Selector] Skipping region prompt on excluded/non-included URL');
     } else {
       // No saved region
       // Check GeoIP enabled AFTER container is injected
@@ -1014,10 +1043,10 @@
         // Trigger advisory updates
         window.dispatchEvent(new CustomEvent('regionChanged', { detail: { region } }));
         
-        // If changed to Scotland, reload to trigger MUP levy check
+        // Scotland: nudge cart so MUP Functions / levy logic run without a full page reload
         if (region === 'scotland') {
-          console.log('[Region Selector] Changed to Scotland - reloading page...');
-          window.location.reload();
+          console.log('[Region Selector] Changed to Scotland - triggering MUP cart transform...');
+          await triggerCartTransform();
         }
       }
     });
@@ -1119,6 +1148,19 @@
       "id": "placeholder_text",
       "label": "Placeholder Text",
       "default": "Select Region"
+    },
+    {
+      "type": "textarea",
+      "id": "exclude_paths",
+      "label": "Exclude URL paths",
+      "info": "One path prefix per line (or comma-separated). Region popup is skipped when the URL contains any of these. Default: /bars/",
+      "default": "/bars/"
+    },
+    {
+      "type": "textarea",
+      "id": "include_paths",
+      "label": "Include URL paths (optional)",
+      "info": "Leave blank to prompt on all non-excluded pages. If set, the popup only appears when the URL contains one of these prefixes (and is not excluded)."
     }
   ]
 }

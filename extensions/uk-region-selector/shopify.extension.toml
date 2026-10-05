@@ -43,6 +43,19 @@ type = "global_selector"
   label = "Placeholder Text"
   default = "Select Region"
 
+  [[extensions.settings.app_embed.settings]]
+  id = "exclude_paths"
+  type = "textarea"
+  label = "Exclude URL paths"
+  info = "One path prefix per line. Region popup is skipped when the URL contains any of these."
+  default = "/bars/"
+
+  [[extensions.settings.app_embed.settings]]
+  id = "include_paths"
+  type = "textarea"
+  label = "Include URL paths (optional)"
+  info = "Leave blank to prompt on all non-excluded pages. If set, popup only appears on matching URLs."
+
 [[extensions.settings.blocks]]
 name = "Product Advisory"
 type = "product_advisory"
