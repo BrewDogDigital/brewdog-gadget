@@ -17,5 +17,13 @@ redirect_urls = [
   "https://brewdog.gadget.app/api/connections/auth/shopify/callback"
 ]
 
+[access_scopes]
+scopes = "read_customers,write_customers,read_customer_merge,read_customer_events,read_orders,write_orders,read_fulfillments,read_assigned_fulfillment_orders,write_assigned_fulfillment_orders,read_discounts,write_discounts,read_products,write_products,read_price_rules,read_discounts_allocator_functions,write_discounts_allocator_functions,read_cart_transforms,write_cart_transforms,read_gift_cards,write_gift_cards"
+
 [pos]
 embedded = false
+
+[order.metafields.move_fresh.gift_message]
+name = "Gift Message"
+type = "single_line_text_field"
+capabilities.cart_to_order_copyable = true

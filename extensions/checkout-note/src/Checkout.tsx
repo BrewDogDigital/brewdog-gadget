@@ -1,39 +1,41 @@
-import React, { useEffect } from 'react';
-import {
-  reactExtension,
-  Text,
-  BlockLayout,
-  View,
-  useAttributeValues,
-  useSettings,
-  useApplyMetafieldsChange,
-} from '@shopify/ui-extensions-react/checkout';
+import '@shopify/ui-extensions/preact';
+import {render} from 'preact';
+import {useEffect} from 'preact/hooks';
+import {useAttributeValues} from '@shopify/ui-extensions/checkout/preact';
 
-export default reactExtension(
-  'purchase.checkout.block.render',
-  () => <CheckoutNote />,
-);
+export default function extension() {
+  render(<CheckoutNote />, document.body);
+}
 
 function CheckoutNote() {
   const [message] = useAttributeValues(['message']);
-  const settings = useSettings();
-  const applyMetafieldsChange = useApplyMetafieldsChange();
 
   // Get settings with fallback values
-  const noteTitle = settings?.note_title || 'Gift Message';
+  const noteTitle =
+    (shopify.settings.value.note_title as string | undefined) || 'Gift Message';
 
   // Set metafield when message exists
   useEffect(() => {
-    if (message) {
-      applyMetafieldsChange({
-        type: 'updateMetafield',
-        namespace: 'move_fresh',
-        key: 'gift_message',
-        valueType: 'string',
-        value: message,
-      });
+    if (!message || !shopify.instructions.value.metafields.canSetCartMetafields) {
+      return;
     }
-  }, [message, applyMetafieldsChange]);
+
+    void shopify
+      .applyMetafieldChange({
+        type: 'updateCartMetafield',
+        metafield: {
+          namespace: 'move_fresh',
+          key: 'gift_message',
+          type: 'single_line_text_field',
+          value: message,
+        },
+      })
+      .then((result) => {
+        if (result.type === 'error') {
+          console.error('[Checkout Note] Failed to save gift message:', result.message);
+        }
+      });
+  }, [message]);
 
   // Only render if message exists
   if (!message) {
@@ -41,27 +43,11 @@ function CheckoutNote() {
   }
 
   return (
-    <BlockLayout spacing="tight">
-      <View
-        border="base"
-        cornerRadius="base"
-        padding="base"
-        background="subdued"
-      >
-        <BlockLayout spacing="tight">
-          {/* Title aligned to the left */}
-          <View>
-            <Text emphasis="bold" size="medium">
-              {noteTitle}
-            </Text>
-          </View>
-          
-          {/* Message content */}
-          <Text size="base" appearance="subdued">
-            {message}
-          </Text>
-        </BlockLayout>
-      </View>
-    </BlockLayout>
+    <s-box border="base" borderRadius="base" padding="base">
+      <s-stack gap="small-200">
+        <s-heading>{noteTitle}</s-heading>
+        <s-text>{message}</s-text>
+      </s-stack>
+    </s-box>
   );
-} 
+}
